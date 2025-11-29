@@ -73,7 +73,8 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
   Future<void> _loadExistingCyclock() async {
     if (widget.cyclock == null) return;
     
-    final stages = await widget.database.getStagesForCyclock(widget.cyclock!.id);
+    // UPDATED: accessing TimerStagesDao
+    final stages = await widget.database.timerStagesDao.getStagesForCyclock(widget.cyclock!.id);
     
     setState(() {
       for (int i = 0; i < stages.length; i++) {
@@ -197,15 +198,16 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
   Future<int> _saveCyclockData() async {
     if (widget.cyclock != null) {
       // Update existing cyclock
-      await widget.database.updateCyclock(widget.cyclock!.copyWith(
+      await widget.database.cyclocksDao.updateCyclock(widget.cyclock!.copyWith(
         name: _nameController.text,
         repeatCount: _repeatIndefinitely ? 1 : _repeatCount,
         repeatIndefinitely: _repeatIndefinitely,
+        colorPalette: _getColorPaletteString(),
       ));
       return widget.cyclock!.id;
     } else {
       // Create new cyclock
-      return await widget.database.insertCyclock(CyclocksCompanion(
+      return await widget.database.cyclocksDao.insertCyclock(CyclocksCompanion(
         name: Value(_nameController.text),
         isDefault: const Value(false),
         repeatCount: Value(_repeatIndefinitely ? 1 : _repeatCount),
@@ -221,24 +223,23 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
   }
 
   Future<void> _saveTimerStages(int cyclockId) async {
-    // Delete existing stages if editing
+    // Delete existing stages if saving after editing
+    // accessing TimerStagesDao to clean up old stages
     if (widget.cyclock != null) {
-      final existingStages = await widget.database.getStagesForCyclock(cyclockId);
-      for (final stage in existingStages) {
-        // We'll rely on cascade delete or update individual stages
-      }
+       await widget.database.timerStagesDao.deleteStagesForCyclock(cyclockId);
     }
 
     int orderIndex = 0;
 
     // Save fuse if enabled
     if (_hasFuse) {
-      await widget.database.insertTimerStage(TimerStagesCompanion(
+      // UPDATED: accessing TimerStagesDao
+      await widget.database.timerStagesDao.insertTimerStage(TimerStagesCompanion(
         cyclockId: Value(cyclockId),
         orderIndex: Value(orderIndex++),
         name: const Value('Fuse'),
         durationSeconds: Value(_fuseDuration),
-        color: const Value('red'), // Fuse is always red
+        color: const Value('red'), 
         sound: Value(_fuseSound),
         isFuse: const Value(true),
       ));
@@ -247,7 +248,8 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
     // Save timer stages
     for (int i = 0; i < _timerStages.length; i++) {
       final stage = _timerStages[i];
-      await widget.database.insertTimerStage(TimerStagesCompanion(
+      // UPDATED: accessing TimerStagesDao
+      await widget.database.timerStagesDao.insertTimerStage(TimerStagesCompanion(
         cyclockId: Value(cyclockId),
         orderIndex: Value(orderIndex++),
         name: Value(stage.name),

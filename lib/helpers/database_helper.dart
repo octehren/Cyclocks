@@ -3,11 +3,13 @@ import 'package:cyclock/data/database.dart';
 
 class DatabaseHelper {
   static Future<void> initializeDefaultCyclocks(AppDatabase db) async {
-    final existing = await db.getAllCyclocks();
+    // UPDATED: accessing DAO
+    final existing = await db.cyclocksDao.getAllCyclocks();
     if (existing.isNotEmpty) return;
     
     // Pomodoro Cyclock
-    final pomodoroId = await db.insertCyclock(CyclocksCompanion(
+    // UPDATED: accessing DAO
+    final pomodoroId = await db.cyclocksDao.insertCyclock(CyclocksCompanion(
       name: const Value('Pomodoro'),
       isDefault: const Value(true),
       repeatCount: const Value(1),
@@ -18,7 +20,8 @@ class DatabaseHelper {
     await _insertPomodoroStages(db, pomodoroId);
     
     // Squats Cyclock
-    final squatsId = await db.insertCyclock(CyclocksCompanion(
+    // UPDATED: accessing DAO
+    final squatsId = await db.cyclocksDao.insertCyclock(CyclocksCompanion(
       name: const Value('Squats'),
       isDefault: const Value(true),
       repeatCount: const Value(1),
@@ -29,7 +32,8 @@ class DatabaseHelper {
     await _insertSquatsStages(db, squatsId);
     
     // Stretching Cyclock
-    final stretchingId = await db.insertCyclock(CyclocksCompanion(
+    // UPDATED: accessing DAO
+    final stretchingId = await db.cyclocksDao.insertCyclock(CyclocksCompanion(
       name: const Value('Stretching'),
       isDefault: const Value(true),
       repeatCount: const Value(1),
@@ -42,7 +46,8 @@ class DatabaseHelper {
   
   static Future<void> _insertPomodoroStages(AppDatabase db, int cyclockId) async {
     // Fuse (60 seconds)
-    await db.insertTimerStage(TimerStagesCompanion(
+    // UPDATED: accessing DAO
+    await db.timerStagesDao.insertTimerStage(TimerStagesCompanion(
       cyclockId: Value(cyclockId),
       orderIndex: const Value(0),
       name: const Value('Fuse'),
@@ -55,7 +60,8 @@ class DatabaseHelper {
     // 3 cycles of work + short break
     for (int cycle = 0; cycle < 3; cycle++) {
       // Work timer (25 minutes)
-      await db.insertTimerStage(TimerStagesCompanion(
+      // UPDATED: accessing DAO
+      await db.timerStagesDao.insertTimerStage(TimerStagesCompanion(
         cyclockId: Value(cyclockId),
         orderIndex: Value(1 + (cycle * 2)),
         name: const Value('Work'),
@@ -66,7 +72,8 @@ class DatabaseHelper {
       ));
       
       // Short break (5 minutes)
-      await db.insertTimerStage(TimerStagesCompanion(
+      // UPDATED: accessing DAO
+      await db.timerStagesDao.insertTimerStage(TimerStagesCompanion(
         cyclockId: Value(cyclockId),
         orderIndex: Value(2 + (cycle * 2)),
         name: const Value('Short Break'),
@@ -78,7 +85,8 @@ class DatabaseHelper {
     }
     
     // Final work timer (25 minutes)
-    await db.insertTimerStage(TimerStagesCompanion(
+    // UPDATED: accessing DAO
+    await db.timerStagesDao.insertTimerStage(TimerStagesCompanion(
       cyclockId: Value(cyclockId),
       orderIndex: const Value(7),
       name: const Value('Work'),
@@ -89,7 +97,8 @@ class DatabaseHelper {
     ));
     
     // Long break (30 minutes)
-    await db.insertTimerStage(TimerStagesCompanion(
+    // UPDATED: accessing DAO
+    await db.timerStagesDao.insertTimerStage(TimerStagesCompanion(
       cyclockId: Value(cyclockId),
       orderIndex: const Value(8),
       name: const Value('Long Break'),
@@ -102,7 +111,8 @@ class DatabaseHelper {
   
   static Future<void> _insertSquatsStages(AppDatabase db, int cyclockId) async {
     // Fuse (10 seconds)
-    await db.insertTimerStage(TimerStagesCompanion(
+    // UPDATED: accessing DAO
+    await db.timerStagesDao.insertTimerStage(TimerStagesCompanion(
       cyclockId: Value(cyclockId),
       orderIndex: const Value(0),
       name: const Value('Fuse'),
@@ -115,7 +125,8 @@ class DatabaseHelper {
     // 2 cycles of exercise + rest
     for (int cycle = 0; cycle < 2; cycle++) {
       // Exercise (2 minutes)
-      await db.insertTimerStage(TimerStagesCompanion(
+      // UPDATED: accessing DAO
+      await db.timerStagesDao.insertTimerStage(TimerStagesCompanion(
         cyclockId: Value(cyclockId),
         orderIndex: Value(1 + (cycle * 2)),
         name: const Value('Exercise'),
@@ -126,7 +137,8 @@ class DatabaseHelper {
       ));
       
       // Rest (30 seconds)
-      await db.insertTimerStage(TimerStagesCompanion(
+      // UPDATED: accessing DAO
+      await db.timerStagesDao.insertTimerStage(TimerStagesCompanion(
         cyclockId: Value(cyclockId),
         orderIndex: Value(2 + (cycle * 2)),
         name: const Value('Rest'),
@@ -138,7 +150,8 @@ class DatabaseHelper {
     }
     
     // Final exercise (2 minutes)
-    await db.insertTimerStage(TimerStagesCompanion(
+    // UPDATED: accessing DAO
+    await db.timerStagesDao.insertTimerStage(TimerStagesCompanion(
       cyclockId: Value(cyclockId),
       orderIndex: const Value(5),
       name: const Value('Exercise'),
@@ -151,7 +164,8 @@ class DatabaseHelper {
   
   static Future<void> _insertStretchingStages(AppDatabase db, int cyclockId) async {
     // Fuse (10 seconds)
-    await db.insertTimerStage(TimerStagesCompanion(
+    // UPDATED: accessing DAO
+    await db.timerStagesDao.insertTimerStage(TimerStagesCompanion(
       cyclockId: Value(cyclockId),
       orderIndex: const Value(0),
       name: const Value('Fuse'),
@@ -164,7 +178,8 @@ class DatabaseHelper {
     // 5 cycles of stretch + pause
     for (int cycle = 0; cycle < 5; cycle++) {
       // Stretch (45 seconds)
-      await db.insertTimerStage(TimerStagesCompanion(
+      // UPDATED: accessing DAO
+      await db.timerStagesDao.insertTimerStage(TimerStagesCompanion(
         cyclockId: Value(cyclockId),
         orderIndex: Value(1 + (cycle * 2)),
         name: const Value('Stretch'),
@@ -175,7 +190,8 @@ class DatabaseHelper {
       ));
       
       // Pause (15 seconds)
-      await db.insertTimerStage(TimerStagesCompanion(
+      // UPDATED: accessing DAO
+      await db.timerStagesDao.insertTimerStage(TimerStagesCompanion(
         cyclockId: Value(cyclockId),
         orderIndex: Value(2 + (cycle * 2)),
         name: const Value('Pause'),
@@ -187,7 +203,8 @@ class DatabaseHelper {
     }
     
     // Final stretch (45 seconds)
-    await db.insertTimerStage(TimerStagesCompanion(
+    // UPDATED: accessing DAO
+    await db.timerStagesDao.insertTimerStage(TimerStagesCompanion(
       cyclockId: Value(cyclockId),
       orderIndex: const Value(11),
       name: const Value('Stretch'),

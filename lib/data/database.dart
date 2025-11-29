@@ -1,5 +1,4 @@
 // Conditional imports remain the same
-// EXPLANATION: This is a powerful Dart feature for writing cross-platform code. The `if` directive checks for the availability of a core library (`dart.library.html` or `dart.library.io`). If the code is compiled for the web, `web.dart` is imported. If it's compiled for a native platform (mobile/desktop), `native.dart` is imported. `unsupported.dart` acts as a fallback. This allows you to define the same `openConnection()` function with different implementations for different platforms.
 import 'package:cyclock/data/connection/unsupported.dart'
     if (dart.library.html) 'package:cyclock/data/connection/web.dart'
     if (dart.library.io) 'package:cyclock/data/connection/native.dart'
@@ -34,34 +33,56 @@ class TimerStages extends Table {
   BoolColumn get isFuse => boolean().withDefault(const Constant(false))();
 }
 
-@DriftDatabase(tables: [Cyclocks, TimerStages])
-class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
+// -----------------------------------------------------------------------------
+// DAO DEFINITIONS
+// -----------------------------------------------------------------------------
 
-  @override
-  int get schemaVersion => 1;
+@DriftAccessor(tables: [Cyclocks])
+class CyclocksDao extends DatabaseAccessor<AppDatabase> with _$CyclocksDaoMixin {
+  CyclocksDao(super.db);
 
-  // Cyclock CRUD operations
   Future<int> insertCyclock(CyclocksCompanion cyclock) => into(cyclocks).insert(cyclock);
   Future<List<Cyclock>> getAllCyclocks() => select(cyclocks).get();
   Future updateCyclock(Cyclock cyclock) => update(cyclocks).replace(cyclock);
   Future deleteCyclock(Cyclock cyclock) => delete(cyclocks).delete(cyclock);
+}
 
-  // TimerStage operations
+@DriftAccessor(tables: [TimerStages])
+class TimerStagesDao extends DatabaseAccessor<AppDatabase> with _$TimerStagesDaoMixin {
+  TimerStagesDao(super.db);
+
   Future<int> insertTimerStage(TimerStagesCompanion stage) => into(timerStages).insert(stage);
+  
   Future<List<TimerStage>> getStagesForCyclock(int cyclockId) {
     return (select(timerStages)
       ..where((t) => t.cyclockId.equals(cyclockId))
       ..orderBy([(t) => OrderingTerm(expression: t.orderIndex)]))
       .get();
   }
+  
+  Future<void> deleteStagesForCyclock(int cyclockId) {
+    return (delete(timerStages)..where((t) => t.cyclockId.equals(cyclockId))).go();
+  }
+}
 
-  // EXPLANATION: A private constructor ensures that this class can only be instantiated from within this file. This is key to implementing the singleton pattern.
+// -----------------------------------------------------------------------------
+// DATABASE DEFINITION
+// -----------------------------------------------------------------------------
+
+@DriftDatabase(tables: [Cyclocks, TimerStages], daos: [CyclocksDao, TimerStagesDao])
+class AppDatabase extends _$AppDatabase {
+  AppDatabase() : super(_openConnection());
+
+  @override
+  int get schemaVersion => 1;
+
+  // EXPLANATION: A private constructor ensures that this class can only be instantiated from within this file.
   AppDatabase._internal() : super(db_connection.openConnection());
-  // As the name implies, a constructor meant for testing purposes only, to create in-memory DBs.
+  
+  // As the name implies, a constructor meant for testing purposes only.
   AppDatabase.namedConstructorForTestingOnly(super.e);
 
-  // EXPLANATION: This is the Singleton pattern. A `static final` instance is created once. Any time another part of the app needs to access the database, it will always get this exact same instance by calling `AppDatabase.instance`. This prevents multiple database connections from being opened.
+  // EXPLANATION: Singleton pattern.
   static final AppDatabase instance = AppDatabase._internal();
 }
 

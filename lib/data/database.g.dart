@@ -3,6 +3,14 @@
 part of 'database.dart';
 
 // ignore_for_file: type=lint
+mixin _$CyclocksDaoMixin on DatabaseAccessor<AppDatabase> {
+  $CyclocksTable get cyclocks => attachedDatabase.cyclocks;
+}
+mixin _$TimerStagesDaoMixin on DatabaseAccessor<AppDatabase> {
+  $CyclocksTable get cyclocks => attachedDatabase.cyclocks;
+  $TimerStagesTable get timerStages => attachedDatabase.timerStages;
+}
+
 class $CyclocksTable extends Cyclocks with TableInfo<$CyclocksTable, Cyclock> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -930,6 +938,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $CyclocksTable cyclocks = $CyclocksTable(this);
   late final $TimerStagesTable timerStages = $TimerStagesTable(this);
+  late final CyclocksDao cyclocksDao = CyclocksDao(this as AppDatabase);
+  late final TimerStagesDao timerStagesDao = TimerStagesDao(
+    this as AppDatabase,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();

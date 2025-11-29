@@ -34,11 +34,13 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
   }
   
   Future<void> _initializeTimer() async {
-    _stages = await widget.database.getStagesForCyclock(widget.cyclock.id);
+    // 1. Fetch data using the DAO
+    final stages = await widget.database.timerStagesDao.getStagesForCyclock(widget.cyclock.id);
     
+    // 2. Initialize the engine
     _timerEngine = TimerEngine();
     _timerEngine.initialize(
-      _stages,
+      stages, // Pass local variable
       widget.cyclock.repeatCount,
       repeatIndefinitely: widget.cyclock.repeatIndefinitely,
     );
@@ -75,11 +77,17 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
       }
     };
     
-    // Initialize the countdown controller with the first stage duration
-    if (_stages.isNotEmpty) {
-      _remainingSeconds = _stages.first.durationSeconds;
+    // 3. CRITICAL FIX: Update state to trigger rebuild and remove the loading spinner
+    if (mounted) {
+      setState(() {
+        _stages = stages;
+        if (_stages.isNotEmpty) {
+          _remainingSeconds = _stages.first.durationSeconds;
+        }
+      });
     }
   }
+
   
   void _startTimer() {
     setState(() {

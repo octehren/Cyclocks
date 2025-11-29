@@ -25,7 +25,8 @@ class _CyclocksIndexScreenState extends State<CyclocksIndexScreen> {
   }
   
   Future<void> _loadCyclocks() async {
-    final cyclocks = await widget.database.getAllCyclocks();
+    // accessing DAO
+    final cyclocks = await widget.database.cyclocksDao.getAllCyclocks();
     setState(() {
       _cyclocks = cyclocks;
     });
@@ -114,7 +115,7 @@ class _CyclocksIndexScreenState extends State<CyclocksIndexScreen> {
                 cyclock: cyclock,
               ),
             ),
-          );
+          ).then((_) => _loadCyclocks()); // Reload when coming back;
         },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -169,7 +170,7 @@ class _CyclocksIndexScreenState extends State<CyclocksIndexScreen> {
             MaterialPageRoute(
               builder: (context) => CyclockEditScreen(),
             ),
-          );
+          ).then((_) => _loadCyclocks()); // Reload when coming back
         },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
