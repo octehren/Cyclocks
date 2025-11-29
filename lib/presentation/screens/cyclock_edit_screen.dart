@@ -3,11 +3,12 @@ import 'package:cyclock/data/database.dart';
 import 'package:drift/drift.dart' hide Column; // has same name as presentation widget
 
 class CyclockEditScreen extends StatefulWidget {
-  final AppDatabase database = AppDatabase.instance;
+  final AppDatabase database;
   final Cyclock? cyclock; // null for creation, not null for editing
   
   CyclockEditScreen({
     super.key,
+    required this.database,
     this.cyclock,
   });
   
@@ -73,7 +74,7 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
   Future<void> _loadExistingCyclock() async {
     if (widget.cyclock == null) return;
     
-    // UPDATED: accessing TimerStagesDao
+    // accessing TimerStagesDao
     final stages = await widget.database.timerStagesDao.getStagesForCyclock(widget.cyclock!.id);
     
     setState(() {
@@ -233,7 +234,7 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
 
     // Save fuse if enabled
     if (_hasFuse) {
-      // UPDATED: accessing TimerStagesDao
+      // accessing TimerStagesDao
       await widget.database.timerStagesDao.insertTimerStage(TimerStagesCompanion(
         cyclockId: Value(cyclockId),
         orderIndex: Value(orderIndex++),
@@ -248,7 +249,7 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
     // Save timer stages
     for (int i = 0; i < _timerStages.length; i++) {
       final stage = _timerStages[i];
-      // UPDATED: accessing TimerStagesDao
+      // accessing TimerStagesDao
       await widget.database.timerStagesDao.insertTimerStage(TimerStagesCompanion(
         cyclockId: Value(cyclockId),
         orderIndex: Value(orderIndex++),

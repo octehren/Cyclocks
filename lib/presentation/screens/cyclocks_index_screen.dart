@@ -168,7 +168,7 @@ class _CyclocksIndexScreenState extends State<CyclocksIndexScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => CyclockEditScreen(),
+              builder: (context) => CyclockEditScreen(database: widget.database),
             ),
           ).then((_) => _loadCyclocks()); // Reload when coming back
         },
