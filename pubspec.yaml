@@ -90,7 +90,7 @@ flutter:
   fonts:
     - family: Adwaita
       fonts:
-        - asset: fonts/AdwaitaMonoNerdFont-Regular.ttf
+        - asset: assets/fonts/AdwaitaMonoNerdFont-Regular.ttf
   # fonts:
   #   - family: Schyler
   #     fonts:
