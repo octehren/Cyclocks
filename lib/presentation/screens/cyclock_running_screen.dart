@@ -19,7 +19,9 @@ class CyclockRunningScreen extends StatefulWidget {
 
 class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
   late TimerEngine _timerEngine;
-  List<TimerStage> _stages = [];
+  List<TimerStage> _executionQueue = [];
+  List<Color> _executionQueueColors = [];
+
   int _currentStageIndex = 0;
   int _remainingSeconds = 0;
   bool _isRunning = false;
@@ -34,81 +36,94 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
   }
   
   Future<void> _initializeTimer() async {
-    // 1. Fetch data using the DAO
-    final stages = await widget.database.timerStagesDao.getStagesForCyclock(widget.cyclock.id);
+    List<TimerStage> flattenedQueue = [];
+    List<Color> flattenedColors = [];
+
+    // 1. Add Fuse if enabled
+    if (widget.cyclock.hasFuse) {
+      // Create a temporary stage for the fuse. ID -1 indicates it's not in DB.
+      flattenedQueue.add(TimerStage(
+        id: -1, 
+        cycleId: -1,
+        orderIndex: -1,
+        name: 'Fuse',
+        durationSeconds: widget.cyclock.fuseDuration,
+        color: 'red', // Fuse is typically red
+        sound: widget.cyclock.fuseSound,
+      ));
+      // Fuse uses the Cyclock's primary color or just neutral for background
+      flattenedColors.add(Colors.black87); 
+    }
+
+    // 2. Fetch Cycles from DB
+    final dbCycles = await widget.database.cyclesDao.getCyclesForCyclock(widget.cyclock.id);
     
-    // 2. Initialize the engine
+    // 3. Flatten Logic
+    for (var cycle in dbCycles) {
+      final cycleStages = await widget.database.timerStagesDao.getStagesForCycle(cycle.id);
+      final cycleColor = _getStageColor(cycle.backgroundColor);
+
+      for (int i = 0; i < cycle.repeatCount; i++) {
+        for (var stage in cycleStages) {
+          flattenedQueue.add(stage);
+          flattenedColors.add(cycleColor);
+        }
+      }
+    }
+    
+    // 4. Init Engine
     _timerEngine = TimerEngine();
     _timerEngine.initialize(
-      stages, // Pass local variable
-      widget.cyclock.repeatCount,
+      flattenedQueue, 
+      1, // Engine treats queue as one giant cycle
       repeatIndefinitely: widget.cyclock.repeatIndefinitely,
     );
     
     _timerEngine.onTick = (stageIndex, remainingSeconds) {
       if (mounted) {
         setState(() {
-          _currentStageIndex = stageIndex;
+          _currentStageIndex = stageIndex % flattenedQueue.length;
           _remainingSeconds = remainingSeconds;
         });
       }
     };
     
-    _timerEngine.onStageComplete = (stageIndex) {
-      // Stage completion is handled automatically
-    };
-    
     _timerEngine.onCycleComplete = () {
-      if (mounted) {
-        setState(() {
-          _currentCycle = _timerEngine.currentCycle;
-        });
-      }
+      if (mounted) setState(() => _currentCycle++);
     };
     
     _timerEngine.onAllCyclesComplete = () {
       if (mounted) {
-        setState(() {
-          _isRunning = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Cyclock completed!')),
-        );
+        setState(() => _isRunning = false);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Workout Complete!')));
       }
     };
     
-    // 3. CRITICAL FIX: Update state to trigger rebuild and remove the loading spinner
     if (mounted) {
       setState(() {
-        _stages = stages;
-        if (_stages.isNotEmpty) {
-          _remainingSeconds = _stages.first.durationSeconds;
+        _executionQueue = flattenedQueue;
+        _executionQueueColors = flattenedColors;
+        if (_executionQueue.isNotEmpty) {
+          _remainingSeconds = _executionQueue.first.durationSeconds;
         }
       });
     }
   }
 
-  
   void _startTimer() {
-    setState(() {
-      _isRunning = true;
-    });
+    setState(() => _isRunning = true);
     _timerEngine.start();
     _countDownController.start();
   }
   
   void _pauseTimer() {
-    setState(() {
-      _isRunning = false;
-    });
+    setState(() => _isRunning = false);
     _timerEngine.pause();
     _countDownController.pause();
   }
   
   void _resumeTimer() {
-    setState(() {
-      _isRunning = true;
-    });
+    setState(() => _isRunning = true);
     _timerEngine.resume();
     _countDownController.resume();
   }
@@ -130,14 +145,19 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
       case 'blue': return Colors.blue;
       case 'pink': return Colors.pink;
       case 'grey': return Colors.grey;
+      case 'orange': return Colors.orange;
+      case 'purple': return Colors.purple;
+      case 'teal': return Colors.teal;
+      case 'amber': return Colors.amber;
+      case 'darkblue': return Colors.blue[900]!;
       default: return Colors.blue;
     }
   }
   
   String _formatTime(int seconds) {
     final minutes = seconds ~/ 60;
-    final remainingSeconds = seconds % 60;
-    return '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
+    final sec = seconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${sec.toString().padLeft(2, '0')}';
   }
   
   @override
@@ -148,30 +168,26 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
   
   @override
   Widget build(BuildContext context) {
-    if (_stages.isEmpty) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+    if (_executionQueue.isEmpty) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     
-    final currentStage = _currentStageIndex < _stages.length 
-        ? _stages[_currentStageIndex] 
-        : _stages.first;
+    final currentStage = _executionQueue[_currentStageIndex];
+    final currentCycleColor = _executionQueueColors[_currentStageIndex];
     
     return Scaffold(
+      backgroundColor: currentCycleColor.withOpacity(0.05),
       appBar: AppBar(
         title: Text(widget.cyclock.name),
-        backgroundColor: _getStageColor(currentStage.color),
+        backgroundColor: currentCycleColor,
         foregroundColor: Colors.white,
       ),
       body: Column(
         children: [
-          // Current stage info
+          // Header Info
           Container(
             padding: const EdgeInsets.all(16),
-            color: _getStageColor(currentStage.color).withOpacity(0.1),
+            color: Colors.white.withOpacity(0.8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -180,77 +196,62 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
                   children: [
                     Text(
                       currentStage.name,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                     Text(
-                      'Stage ${_currentStageIndex + 1} of ${_stages.length}',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                      ),
+                      'Step ${_currentStageIndex + 1} of ${_executionQueue.length}',
+                      style: TextStyle(color: Colors.grey[800]),
                     ),
                   ],
                 ),
-                Text(
-                  'Cycle ${_currentCycle + 1}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                if (widget.cyclock.repeatIndefinitely)
+                   Text('Loop ${_currentCycle + 1}', style: const TextStyle(fontWeight: FontWeight.bold)),
               ],
             ),
           ),
           
-          // Circular timer
+          // Main Timer
           Expanded(
             child: Center(
               child: CircularCountDownTimer(
                 duration: currentStage.durationSeconds,
                 initialDuration: _remainingSeconds,
                 controller: _countDownController,
-                width: MediaQuery.of(context).size.width / 1.5,
-                height: MediaQuery.of(context).size.height / 2,
+                width: MediaQuery.of(context).size.width * 0.7,
+                height: MediaQuery.of(context).size.height * 0.4,
                 ringColor: Colors.grey[300]!,
                 fillColor: _getStageColor(currentStage.color),
                 backgroundColor: Colors.transparent,
-                strokeWidth: 12.0,
+                strokeWidth: 15.0,
                 strokeCap: StrokeCap.round,
-                textStyle: const TextStyle(
-                  fontSize: 40.0,
-                  fontWeight: FontWeight.bold,
-                ),
+                textStyle: const TextStyle(fontSize: 48.0, fontWeight: FontWeight.bold),
                 textFormat: CountdownTextFormat.MM_SS,
                 isReverse: true,
                 isReverseAnimation: true,
                 isTimerTextShown: true,
                 autoStart: false,
-                onComplete: () {
-                  // Handled by timer engine
-                },
+                onComplete: () {},
               ),
             ),
           ),
           
-          // Next stages preview
+          // Timeline
           Container(
-            height: 80,
+            height: 90,
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: _stages.length,
+              itemCount: _executionQueue.length,
               itemBuilder: (context, index) {
-                final stage = _stages[index];
+                final stage = _executionQueue[index];
+                final isCurrent = index == _currentStageIndex;
                 return Container(
-                  width: 60,
+                  width: 70,
                   margin: const EdgeInsets.symmetric(horizontal: 4),
                   decoration: BoxDecoration(
-                    color: _getStageColor(stage.color).withOpacity(
-                      index == _currentStageIndex ? 1.0 : 0.3
-                    ),
+                    color: _getStageColor(stage.color).withOpacity(isCurrent ? 1.0 : 0.2),
                     borderRadius: BorderRadius.circular(8),
+                    border: isCurrent ? Border.all(color: Colors.black, width: 2) : null,
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -258,20 +259,18 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
                       Text(
                         _formatTime(stage.durationSeconds),
                         style: TextStyle(
-                          color: index == _currentStageIndex 
-                              ? Colors.white 
-                              : Colors.black,
+                          color: isCurrent ? Colors.white : Colors.black,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Text(
-                        stage.name,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: index == _currentStageIndex 
-                              ? Colors.white 
-                              : Colors.black,
+                      Padding(
+                        padding: const EdgeInsets.all(2.0),
+                        child: Text(
+                          stage.name,
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 10, color: isCurrent ? Colors.white : Colors.black),
                         ),
                       ),
                     ],
@@ -281,56 +280,37 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
             ),
           ),
           
-          // Control buttons
+          // Controls
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(24),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                ElevatedButton(
-                  onPressed: _stopTimer,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text('Stop'),
-                ),
-                
-                if (!_isRunning) ...[
-                  ElevatedButton(
-                    onPressed: _startTimer,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text('Start'),
-                  ),
-                ] else ...[
-                  ElevatedButton(
-                    onPressed: _pauseTimer,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text('Pause'),
-                  ),
-                ],
-                
-                if (!_isRunning && _currentStageIndex > 0) ...[
-                  ElevatedButton(
-                    onPressed: _resumeTimer,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text('Resume'),
-                  ),
-                ],
+                _buildButton('Stop', Colors.red, _stopTimer),
+                if (!_isRunning)
+                  _buildButton('Start', Colors.green, _startTimer)
+                else
+                  _buildButton('Pause', Colors.orange, _pauseTimer),
+                  
+                if (!_isRunning && _currentStageIndex > 0)
+                  _buildButton('Resume', Colors.blue, _resumeTimer),
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildButton(String text, Color color, VoidCallback onTap) {
+    return ElevatedButton(
+      onPressed: onTap,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      ),
+      child: Text(text, style: const TextStyle(fontSize: 18)),
     );
   }
 }

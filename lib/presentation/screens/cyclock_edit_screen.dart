@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:cyclock/data/database.dart';
-import 'package:drift/drift.dart' hide Column; // has same name as presentation widget
+import 'package:drift/drift.dart' show Value;
 
 class CyclockEditScreen extends StatefulWidget {
   final AppDatabase database;
-  final Cyclock? cyclock; // null for creation, not null for editing
+  // --- Null for creation, not null for editing. ---
+  final Cyclock? cyclock;
   
-  CyclockEditScreen({
+  const CyclockEditScreen({
     super.key,
     required this.database,
     this.cyclock,
@@ -18,248 +19,186 @@ class CyclockEditScreen extends StatefulWidget {
 
 class _CyclockEditScreenState extends State<CyclockEditScreen> {
   final _nameController = TextEditingController();
-  final _repeatCountController = TextEditingController(text: '1');
   
-  // Cyclock properties
-  bool _hasFuse = false;
-  int _fuseDuration = 60; // seconds
-  String _fuseSound = 'fuseburn.wav';
+  // Cyclock Global Settings
   bool _repeatIndefinitely = false;
-  int _repeatCount = 1;
+  bool _hasFuse = false;
+  int _fuseDuration = 10;
+  String _fuseSound = 'fuseburn.wav';
+
+  List<CycleForm> _cycles = [];
   
-  // Timer stages
-  final List<TimerStageForm> _timerStages = [];
-  
-  // Available colors for timers
   final List<Color> _availableColors = [
-    Colors.red,
-    Colors.green,
-    Colors.blue,
-    Colors.orange,
-    Colors.purple,
-    Colors.pink,
-    Colors.teal,
-    Colors.amber,
+    Colors.red, Colors.green, Colors.blue, Colors.orange, 
+    Colors.purple, Colors.pink, Colors.teal, Colors.amber, Colors.grey
   ];
   
-  // Available sounds
-  final List<String> _availableSounds = [
-    'timer_start',
-    'bell',
-    'chime',
-    'beep',
-    'alarm',
-  ];
+  final List<String> _availableSounds = ['timer_start', 'bell', 'chime', 'beep', 'alarm', 'fuseburn.wav'];
 
   @override
   void initState() {
     super.initState();
     if (widget.cyclock != null) {
       _nameController.text = widget.cyclock!.name;
-      _repeatCountController.text = widget.cyclock!.repeatCount.toString();
       _repeatIndefinitely = widget.cyclock!.repeatIndefinitely;
+      _hasFuse = widget.cyclock!.hasFuse;
+      _fuseDuration = widget.cyclock!.fuseDuration;
+      _fuseSound = widget.cyclock!.fuseSound;
       _loadExistingCyclock();
     } else {
-      // Add one default timer stage for new cyclocks
-      _timerStages.add(TimerStageForm(
-        name: 'Timer 1',
-        durationMinutes: 1,
-        durationSeconds: 0,
-        color: _availableColors[0],
-        sound: _availableSounds[0],
-      ));
+      _addCycle(); // Start with 1 empty cycle
     }
   }
 
   Future<void> _loadExistingCyclock() async {
     if (widget.cyclock == null) return;
     
-    // accessing TimerStagesDao
-    final stages = await widget.database.timerStagesDao.getStagesForCyclock(widget.cyclock!.id);
+    final dbCycles = await widget.database.cyclesDao.getCyclesForCyclock(widget.cyclock!.id);
+    List<CycleForm> loadedCycles = [];
     
+    for (var dbCycle in dbCycles) {
+      final stages = await widget.database.timerStagesDao.getStagesForCycle(dbCycle.id);
+      
+      List<TimerStageForm> formStages = stages.map((s) => TimerStageForm(
+        name: s.name,
+        durationMinutes: s.durationSeconds ~/ 60,
+        durationSeconds: s.durationSeconds % 60,
+        color: _getColorFromString(s.color),
+        sound: s.sound,
+      )).toList();
+
+      loadedCycles.add(CycleForm(
+        name: dbCycle.name,
+        repeatCount: dbCycle.repeatCount,
+        backgroundColor: _getColorFromString(dbCycle.backgroundColor),
+        stages: formStages,
+      ));
+    }
+
     setState(() {
-      for (int i = 0; i < stages.length; i++) {
-        final stage = stages[i];
-        if (stage.isFuse) {
-          _hasFuse = true;
-          _fuseDuration = stage.durationSeconds;
-          _fuseSound = stage.sound;
-        } else {
-          _timerStages.add(TimerStageForm(
-            name: stage.name,
-            durationMinutes: stage.durationSeconds ~/ 60,
-            durationSeconds: stage.durationSeconds % 60,
-            color: _getColorFromString(stage.color),
-            sound: stage.sound,
-          ));
-        }
-      }
+      _cycles = loadedCycles;
     });
   }
 
   Color _getColorFromString(String colorString) {
-    switch (colorString.toLowerCase()) {
-      case 'red': return Colors.red;
-      case 'green': return Colors.green;
-      case 'blue': return Colors.blue;
-      case 'orange': return Colors.orange;
-      case 'purple': return Colors.purple;
-      case 'pink': return Colors.pink;
-      case 'teal': return Colors.teal;
-      case 'amber': return Colors.amber;
-      default: return Colors.blue;
-    }
+    final map = {
+      'red': Colors.red, 'green': Colors.green, 'blue': Colors.blue,
+      'orange': Colors.orange, 'purple': Colors.purple, 'pink': Colors.pink,
+      'teal': Colors.teal, 'amber': Colors.amber, 'grey': Colors.grey, 'darkblue': Colors.blue[900]
+    };
+    return map[colorString] ?? Colors.blue;
   }
 
   String _getColorString(Color color) {
     if (color == Colors.red) return 'red';
     if (color == Colors.green) return 'green';
     if (color == Colors.blue) return 'blue';
+    if (color == Colors.blue[900]) return 'darkblue';
     if (color == Colors.orange) return 'orange';
     if (color == Colors.purple) return 'purple';
     if (color == Colors.pink) return 'pink';
     if (color == Colors.teal) return 'teal';
     if (color == Colors.amber) return 'amber';
+    if (color == Colors.grey) return 'grey';
     return 'blue';
   }
 
-  void _addTimerStage() {
+  void _addCycle() {
     setState(() {
-      _timerStages.add(TimerStageForm(
-        name: 'Timer ${_timerStages.length + 1}',
+      final newCycle = CycleForm(
+        name: 'Cycle ${_cycles.length + 1}',
+        repeatCount: 1,
+        backgroundColor: Colors.blue.withOpacity(0.1),
+        stages: [],
+      );
+      newCycle.stages.add(TimerStageForm(
+        name: 'Work',
+        durationMinutes: 25,
+        durationSeconds: 0,
+        color: Colors.red,
+        sound: 'timer_start',
+      ));
+      _cycles.add(newCycle);
+    });
+  }
+
+  void _addTimerToCycle(int cycleIndex) {
+    setState(() {
+      _cycles[cycleIndex].stages.add(TimerStageForm(
+        name: 'Timer',
         durationMinutes: 1,
         durationSeconds: 0,
-        color: _availableColors[_timerStages.length % _availableColors.length],
+        color: _availableColors[0],
         sound: _availableSounds[0],
       ));
     });
   }
 
-  void _removeTimerStage(int index) {
-    setState(() {
-      _timerStages.removeAt(index);
-      // Update names
-      for (int i = 0; i < _timerStages.length; i++) {
-        _timerStages[i].name = 'Timer ${i + 1}';
-      }
-    });
-  }
-
-  void _moveTimerStageUp(int index) {
-    if (index > 0) {
-      setState(() {
-        final temp = _timerStages[index];
-        _timerStages[index] = _timerStages[index - 1];
-        _timerStages[index - 1] = temp;
-      });
-    }
-  }
-
-  void _moveTimerStageDown(int index) {
-    if (index < _timerStages.length - 1) {
-      setState(() {
-        final temp = _timerStages[index];
-        _timerStages[index] = _timerStages[index + 1];
-        _timerStages[index + 1] = temp;
-      });
-    }
-  }
-
   Future<void> _saveCyclock() async {
     if (_nameController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a name for the cyclock')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enter a name')));
+      return;
+    }
+    if (_cycles.any((c) => c.stages.isEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('All cycles must have timers')));
       return;
     }
 
-    if (_timerStages.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please add at least one timer stage')),
-      );
-      return;
-    }
+    int cyclockId;
+    final palette = _cycles.map((c) => _getColorString(c.backgroundColor)).toSet().join(',');
+    
+    // 1. Prepare Data
+    final companion = CyclocksCompanion(
+      name: Value(_nameController.text),
+      repeatIndefinitely: Value(_repeatIndefinitely),
+      colorPalette: Value(palette),
+      hasFuse: Value(_hasFuse),
+      fuseDuration: Value(_fuseDuration),
+      fuseSound: Value(_fuseSound),
+    );
 
-    try {
-      final cyclockId = await _saveCyclockData();
-      await _saveTimerStages(cyclockId);
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cyclock saved successfully!')),
-      );
-      
-      Navigator.pop(context);
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving cyclock: $e')),
-      );
-    }
-  }
-
-  Future<int> _saveCyclockData() async {
+    // 2. Insert or Update Parent
     if (widget.cyclock != null) {
-      // Update existing cyclock
+      cyclockId = widget.cyclock!.id;
       await widget.database.cyclocksDao.updateCyclock(widget.cyclock!.copyWith(
         name: _nameController.text,
-        repeatCount: _repeatIndefinitely ? 1 : _repeatCount,
         repeatIndefinitely: _repeatIndefinitely,
-        colorPalette: _getColorPaletteString(),
+        colorPalette: palette,
+        hasFuse: _hasFuse,
+        fuseDuration: _fuseDuration,
+        fuseSound: _fuseSound,
       ));
-      return widget.cyclock!.id;
+      // Clear old structure
+      await widget.database.cyclesDao.deleteCyclesForCyclock(cyclockId);
     } else {
-      // Create new cyclock
-      return await widget.database.cyclocksDao.insertCyclock(CyclocksCompanion(
-        name: Value(_nameController.text),
-        isDefault: const Value(false),
-        repeatCount: Value(_repeatIndefinitely ? 1 : _repeatCount),
-        repeatIndefinitely: Value(_repeatIndefinitely),
-        colorPalette: Value(_getColorPaletteString()),
-      ));
-    }
-  }
-
-  String _getColorPaletteString() {
-    final colors = _timerStages.map((stage) => _getColorString(stage.color)).toList();
-    return colors.join(',');
-  }
-
-  Future<void> _saveTimerStages(int cyclockId) async {
-    // Delete existing stages if saving after editing
-    // accessing TimerStagesDao to clean up old stages
-    if (widget.cyclock != null) {
-       await widget.database.timerStagesDao.deleteStagesForCyclock(cyclockId);
+      cyclockId = await widget.database.cyclocksDao.insertCyclock(companion);
     }
 
-    int orderIndex = 0;
-
-    // Save fuse if enabled
-    if (_hasFuse) {
-      // accessing TimerStagesDao
-      await widget.database.timerStagesDao.insertTimerStage(TimerStagesCompanion(
+    // 3. Insert Children
+    for (int i = 0; i < _cycles.length; i++) {
+      final cycleForm = _cycles[i];
+      final cycleId = await widget.database.cyclesDao.insertCycle(CyclesCompanion(
         cyclockId: Value(cyclockId),
-        orderIndex: Value(orderIndex++),
-        name: const Value('Fuse'),
-        durationSeconds: Value(_fuseDuration),
-        color: const Value('red'), 
-        sound: Value(_fuseSound),
-        isFuse: const Value(true),
+        orderIndex: Value(i),
+        name: Value(cycleForm.name),
+        repeatCount: Value(cycleForm.repeatCount),
+        backgroundColor: Value(_getColorString(cycleForm.backgroundColor)),
       ));
+
+      for (int j = 0; j < cycleForm.stages.length; j++) {
+        final stage = cycleForm.stages[j];
+        await widget.database.timerStagesDao.insertTimerStage(TimerStagesCompanion(
+          cycleId: Value(cycleId),
+          orderIndex: Value(j),
+          name: Value(stage.name),
+          durationSeconds: Value(stage.durationMinutes * 60 + stage.durationSeconds),
+          color: Value(_getColorString(stage.color)),
+          sound: Value(stage.sound),
+        ));
+      }
     }
 
-    // Save timer stages
-    for (int i = 0; i < _timerStages.length; i++) {
-      final stage = _timerStages[i];
-      // accessing TimerStagesDao
-      await widget.database.timerStagesDao.insertTimerStage(TimerStagesCompanion(
-        cyclockId: Value(cyclockId),
-        orderIndex: Value(orderIndex++),
-        name: Value(stage.name),
-        durationSeconds: Value(stage.durationMinutes * 60 + stage.durationSeconds),
-        color: Value(_getColorString(stage.color)),
-        sound: Value(stage.sound),
-        isFuse: const Value(false),
-      ));
-    }
+    if (mounted) Navigator.pop(context);
   }
 
   @override
@@ -267,332 +206,171 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.cyclock == null ? 'Create Cyclock' : 'Edit Cyclock'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _saveCyclock,
-          ),
-        ],
+        actions: [IconButton(icon: const Icon(Icons.save), onPressed: _saveCyclock)],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: ListView(
+        child: Column(
           children: [
-            // Cyclock Name
-            _buildNameSection(),
-            const SizedBox(height: 24),
-            
-            // Fuse Configuration
-            _buildFuseSection(),
-            const SizedBox(height: 24),
-            
-            // Timer Stages
-            _buildTimerStagesSection(),
-            const SizedBox(height: 24),
-            
-            // Repeat Settings
-            _buildRepeatSection(),
-            const SizedBox(height: 32),
-            
-            // Save Button
-            _buildSaveButton(),
+            _buildGlobalSettings(),
+            const Divider(thickness: 2),
+            Expanded(
+              child: ReorderableListView.builder(
+                padding: const EdgeInsets.only(bottom: 80),
+                itemCount: _cycles.length,
+                onReorder: (oldIndex, newIndex) {
+                   setState(() {
+                    if (oldIndex < newIndex) newIndex -= 1;
+                    final item = _cycles.removeAt(oldIndex);
+                    _cycles.insert(newIndex, item);
+                  });
+                },
+                itemBuilder: (context, index) => _buildCycleCard(index),
+              ),
+            ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _addCycle,
+        icon: const Icon(Icons.add_circle),
+        label: const Text("Add Cycle"),
       ),
     );
   }
 
-  Widget _buildNameSection() {
+  Widget _buildGlobalSettings() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Cyclock Name',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
         TextField(
           controller: _nameController,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            hintText: 'Enter cyclock name',
-            labelText: 'Name',
-          ),
+          decoration: const InputDecoration(labelText: 'Cyclock Name', border: OutlineInputBorder()),
         ),
+        const SizedBox(height: 8),
+        SwitchListTile(
+          title: const Text('Loop entire workout indefinitely?'),
+          value: _repeatIndefinitely,
+          onChanged: (v) => setState(() => _repeatIndefinitely = v),
+          contentPadding: EdgeInsets.zero,
+        ),
+        
+        // Fuse Settings
+        SwitchListTile(
+          title: const Text('Start with Fuse?'),
+          subtitle: Text(_hasFuse ? '$_fuseDuration sec' : 'Off'),
+          value: _hasFuse,
+          onChanged: (v) => setState(() => _hasFuse = v),
+          contentPadding: EdgeInsets.zero,
+        ),
+        if (_hasFuse) ...[
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Fuse Duration'),
+                    Slider(
+                      min: 5, max: 120, divisions: 23,
+                      label: '$_fuseDuration s',
+                      value: _fuseDuration.toDouble(),
+                      onChanged: (v) => setState(() => _fuseDuration = v.toInt()),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              DropdownButton<String>(
+                value: _fuseSound,
+                underline: Container(),
+                items: _availableSounds.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                onChanged: (v) => setState(() => _fuseSound = v!),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }
 
-  Widget _buildFuseSection() {
+  Widget _buildCycleCard(int index) {
+    final cycle = _cycles[index];
     return Card(
+      key: ValueKey(cycle),
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: cycle.backgroundColor, width: 3),
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(8.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Cycle Header
             Row(
               children: [
-                const Icon(Icons.fireplace_outlined, size: 24),
+                const Icon(Icons.drag_handle, color: Colors.grey),
                 const SizedBox(width: 8),
-                const Text(
-                  'Fuse Timer',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                Expanded(
+                  child: TextFormField(
+                    initialValue: cycle.name,
+                    decoration: const InputDecoration(labelText: 'Cycle Name', isDense: true),
+                    onChanged: (v) => cycle.name = v,
+                  ),
                 ),
-                const Spacer(),
-                Switch(
-                  value: _hasFuse,
-                  onChanged: (value) {
-                    setState(() {
-                      _hasFuse = value;
-                    });
-                  },
-                ),
-              ],
-            ),
-            if (_hasFuse) ...[
-              const SizedBox(height: 16),
-              const Text('Fuse Duration:'),
-              Slider(
-                value: _fuseDuration.toDouble(),
-                min: 5,
-                max: 300,
-                divisions: 59,
-                label: '${_fuseDuration}s',
-                onChanged: (value) {
-                  setState(() {
-                    _fuseDuration = value.toInt();
-                  });
-                },
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('${_fuseDuration} seconds'),
-                ],
-              ),
-              const SizedBox(height: 16),
-              const Text('Fuse Sound:'),
-              DropdownButton<String>(
-                value: _fuseSound,
-                isExpanded: true,
-                items: _availableSounds.map((String sound) {
-                  return DropdownMenuItem<String>(
-                    value: sound,
-                    child: Text(_formatSoundName(sound)),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _fuseSound = newValue!;
-                  });
-                },
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTimerStagesSection() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.timer, size: 24),
                 const SizedBox(width: 8),
-                const Text(
-                  'Timer Stages',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const Spacer(),
-                ElevatedButton.icon(
-                  onPressed: _addTimerStage,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add Timer'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            if (_timerStages.isEmpty)
-              const Center(
-                child: Text(
-                  'No timer stages added',
-                  style: TextStyle(color: Colors.grey),
-                ),
-              )
-            else
-              ..._timerStages.asMap().entries.map((entry) {
-                final index = entry.key;
-                final stage = entry.value;
-                return _buildTimerStageCard(index, stage);
-              }).toList(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTimerStageCard(int index, TimerStageForm stage) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      color: stage.color.withOpacity(0.1),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: TextEditingController(text: stage.name),
-                    decoration: const InputDecoration(
-                      labelText: 'Timer Name',
-                      border: OutlineInputBorder(),
-                    ),
-                    onChanged: (value) {
-                      setState(() {
-                        stage.name = value;
-                      });
-                    },
+                SizedBox(
+                  width: 80,
+                  child: TextFormField(
+                    initialValue: cycle.repeatCount.toString(),
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Repeats', isDense: true),
+                    onChanged: (v) => cycle.repeatCount = int.tryParse(v) ?? 1,
                   ),
                 ),
-                const SizedBox(width: 12),
-                // Color Picker
-                PopupMenuButton<Color>(
-                  icon: Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color: stage.color,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.grey),
-                    ),
-                  ),
-                  itemBuilder: (context) => _availableColors.map((color) {
-                    return PopupMenuItem<Color>(
-                      value: color,
-                      child: Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: color,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.grey),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                  onSelected: (Color color) {
-                    setState(() {
-                      stage.color = color;
-                    });
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Duration:'),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: DropdownButton<int>(
-                              value: stage.durationMinutes,
-                              isExpanded: true,
-                              items: List.generate(60, (i) => i)
-                                  .map((int value) {
-                                return DropdownMenuItem<int>(
-                                  value: value,
-                                  child: Text('$value minutes'),
-                                );
-                              }).toList(),
-                              onChanged: (int? newValue) {
-                                setState(() {
-                                  stage.durationMinutes = newValue!;
-                                });
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: DropdownButton<int>(
-                              value: stage.durationSeconds,
-                              isExpanded: true,
-                              items: List.generate(60, (i) => i)
-                                  .map((int value) {
-                                return DropdownMenuItem<int>(
-                                  value: value,
-                                  child: Text('$value seconds'),
-                                );
-                              }).toList(),
-                              onChanged: (int? newValue) {
-                                setState(() {
-                                  stage.durationSeconds = newValue!;
-                                });
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Sound:'),
-                      DropdownButton<String>(
-                        value: stage.sound,
-                        isExpanded: true,
-                        items: _availableSounds.map((String sound) {
-                          return DropdownMenuItem<String>(
-                            value: sound,
-                            child: Text(_formatSoundName(sound)),
-                          );
-                        }).toList(),
-                        onChanged: (String? newValue) {
-                          setState(() {
-                            stage.sound = newValue!;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_upward),
-                  onPressed: () => _moveTimerStageUp(index),
-                  tooltip: 'Move Up',
-                ),
-                IconButton(
-                  icon: const Icon(Icons.arrow_downward),
-                  onPressed: () => _moveTimerStageDown(index),
-                  tooltip: 'Move Down',
-                ),
-                const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => _removeTimerStage(index),
-                  tooltip: 'Delete Timer',
+                  onPressed: () => setState(() => _cycles.removeAt(index)),
                 ),
               ],
+            ),
+            const SizedBox(height: 8),
+            // Background Color Picker
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  const Text("Cycle Color: ", style: TextStyle(fontWeight: FontWeight.bold)),
+                  ..._availableColors.map((c) => InkWell(
+                    onTap: () => setState(() => cycle.backgroundColor = c),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      width: 24, height: 24,
+                      decoration: BoxDecoration(
+                        color: c,
+                        shape: BoxShape.circle,
+                        border: cycle.backgroundColor == c ? Border.all(width: 2, color: Colors.black) : null
+                      ),
+                    ),
+                  )),
+                ],
+              ),
+            ),
+            const Divider(),
+            // Timers
+            ...cycle.stages.asMap().entries.map((entry) {
+              return _buildTimerRow(cycle, entry.key, entry.value);
+            }).toList(),
+            
+            Center(
+              child: TextButton.icon(
+                onPressed: () => _addTimerToCycle(index),
+                icon: const Icon(Icons.add),
+                label: const Text("Add Timer"),
+              ),
             ),
           ],
         ),
@@ -600,81 +378,96 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
     );
   }
 
-  Widget _buildRepeatSection() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Repeat Settings',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                const Text('Repeat Indefinitely'),
-                const Spacer(),
-                Switch(
-                  value: _repeatIndefinitely,
-                  onChanged: (value) {
-                    setState(() {
-                      _repeatIndefinitely = value;
-                    });
-                  },
+  Widget _buildTimerRow(CycleForm cycle, int index, TimerStageForm stage) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: TextFormField(
+                  initialValue: stage.name,
+                  decoration: const InputDecoration(labelText: 'Task', isDense: true, contentPadding: EdgeInsets.all(12), border: OutlineInputBorder()),
+                  onChanged: (v) => stage.name = v,
                 ),
-              ],
-            ),
-            if (!_repeatIndefinitely) ...[
-              const SizedBox(height: 16),
-              const Text('Number of Cycles:'),
-              TextField(
-                controller: _repeatCountController,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: 'Enter number of cycles',
+              ),
+              const SizedBox(width: 8),
+              // Duration
+              SizedBox(
+                width: 65,
+                child: DropdownButtonFormField<int>(
+                  value: stage.durationMinutes,
+                  decoration: const InputDecoration(labelText: 'Min', isDense: true, contentPadding: EdgeInsets.all(8), border: OutlineInputBorder()),
+                  items: List.generate(60, (i) => DropdownMenuItem(value: i, child: Text('$i'))),
+                  onChanged: (v) => setState(() => stage.durationMinutes = v!),
                 ),
-                keyboardType: TextInputType.number,
-                onChanged: (value) {
-                  setState(() {
-                    _repeatCount = int.tryParse(value) ?? 1;
-                  });
-                },
+              ),
+              const SizedBox(width: 4),
+              SizedBox(
+                width: 65,
+                child: DropdownButtonFormField<int>(
+                  value: stage.durationSeconds,
+                  decoration: const InputDecoration(labelText: 'Sec', isDense: true, contentPadding: EdgeInsets.all(8), border: OutlineInputBorder()),
+                  items: List.generate(60, (i) => DropdownMenuItem(value: i, child: Text('$i'))),
+                  onChanged: (v) => setState(() => stage.durationSeconds = v!),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, color: Colors.grey),
+                onPressed: () => setState(() => cycle.stages.removeAt(index)),
               ),
             ],
-          ],
-        ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+               ..._availableColors.take(5).map((c) => InkWell(
+                  onTap: () => setState(() => stage.color = c),
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    width: 20, height: 20,
+                    decoration: BoxDecoration(color: c, shape: BoxShape.circle, border: stage.color == c ? Border.all(width: 2) : null),
+                  ),
+               )),
+               const Spacer(),
+               const Icon(Icons.volume_up, size: 16, color: Colors.grey),
+               const SizedBox(width: 4),
+               DropdownButton<String>(
+                 value: stage.sound,
+                 isDense: true,
+                 underline: Container(),
+                 style: const TextStyle(fontSize: 12, color: Colors.black),
+                 items: _availableSounds.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                 onChanged: (v) => setState(() => stage.sound = v!),
+               )
+            ],
+          )
+        ],
       ),
     );
   }
-
-  Widget _buildSaveButton() {
-    return ElevatedButton.icon(
-      onPressed: _saveCyclock,
-      icon: const Icon(Icons.save),
-      label: const Text(
-        'Save Cyclock',
-        style: TextStyle(fontSize: 18),
-      ),
-      style: ElevatedButton.styleFrom(
-        minimumSize: const Size(double.infinity, 50),
-      ),
-    );
-  }
-
-  String _formatSoundName(String sound) {
-    return sound.split('_').map((word) => 
-      word[0].toUpperCase() + word.substring(1)
-    ).join(' ');
-  }
-
+  
   @override
   void dispose() {
     _nameController.dispose();
-    _repeatCountController.dispose();
     super.dispose();
   }
+}
+
+class CycleForm {
+  String name;
+  int repeatCount;
+  Color backgroundColor;
+  List<TimerStageForm> stages;
+  CycleForm({required this.name, required this.repeatCount, required this.backgroundColor, required this.stages});
 }
 
 class TimerStageForm {
@@ -683,12 +476,5 @@ class TimerStageForm {
   int durationSeconds;
   Color color;
   String sound;
-
-  TimerStageForm({
-    required this.name,
-    required this.durationMinutes,
-    required this.durationSeconds,
-    required this.color,
-    required this.sound,
-  });
+  TimerStageForm({required this.name, required this.durationMinutes, required this.durationSeconds, required this.color, required this.sound});
 }
