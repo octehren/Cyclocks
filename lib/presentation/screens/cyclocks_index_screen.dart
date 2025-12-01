@@ -29,7 +29,7 @@ class _CyclocksIndexScreenState extends State<CyclocksIndexScreen> {
     });
   }
 
-  // Added: Helper to confirm and execute deletion
+  // Helper to confirm and execute deletion
   Future<void> _confirmDelete(Cyclock cyclock) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -53,7 +53,6 @@ class _CyclocksIndexScreenState extends State<CyclocksIndexScreen> {
     if (confirmed == true) {
       // Execute as a transaction to ensure stages are deleted with the cyclock
       await widget.database.transaction(() async {
-        await widget.database.timerStagesDao.deleteStagesForCyclock(cyclock.id);
         await widget.database.cyclocksDao.deleteCyclock(cyclock);
       });
       
@@ -183,16 +182,6 @@ class _CyclocksIndexScreenState extends State<CyclocksIndexScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    if (cyclock.isDefault) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        'Default',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),
