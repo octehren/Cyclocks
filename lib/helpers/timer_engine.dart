@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cyclock/data/database.dart';
+import 'package:cyclock/helpers/sound_helper.dart'; // Import the new helper
 
 class TimerEngine {
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -18,13 +19,9 @@ class TimerEngine {
   Function()? onAllCyclesComplete;
   Function()? onCycleComplete;
   
-  // Getters for current state
-  int get currentStageIndex => _currentStageIndex;
+  // Getters
   int get currentCycle => _currentCycle;
-  int get remainingSeconds => _remainingSeconds;
   bool get isRunning => _isRunning;
-  bool get isPaused => _isPaused;
-  List<TimerStage> get stages => _stages;
   
   void initialize(List<TimerStage> stages, int totalCycles, {bool repeatIndefinitely = false}) {
     _stages = stages;
@@ -33,6 +30,9 @@ class TimerEngine {
     _currentStageIndex = 0;
     _isRunning = false;
     _isPaused = false;
+    
+    // Reset player mode
+    _audioPlayer.setReleaseMode(ReleaseMode.stop);
     
     if (_stages.isNotEmpty) {
       _remainingSeconds = _stages.first.durationSeconds;
@@ -45,16 +45,14 @@ class TimerEngine {
     _isRunning = true;
     _isPaused = false;
     
-    // If we're at the beginning, play the first stage
-    if (_currentStageIndex == 0 && _remainingSeconds == _stages.first.durationSeconds) {
-      _playSound(_stages.first.sound);
-    }
-    
-    _startCurrentStage();
+    // Play sound immediately when starting/resuming a stage
+    _playCurrentStageSound();
+    _startTicker();
   }
   
   void pause() {
     _currentTimer?.cancel();
+    _audioPlayer.pause(); // Pause audio if it's a loop
     _isRunning = false;
     _isPaused = true;
   }
@@ -64,11 +62,14 @@ class TimerEngine {
     
     _isRunning = true;
     _isPaused = false;
-    _startCurrentStage();
+    _audioPlayer.resume(); // Resume audio
+    _startTicker();
   }
   
   void stop() {
     _currentTimer?.cancel();
+    _audioPlayer.stop();
+    _audioPlayer.setReleaseMode(ReleaseMode.stop);
     _isRunning = false;
     _isPaused = false;
     _currentStageIndex = 0;
@@ -79,23 +80,11 @@ class TimerEngine {
     }
   }
   
-  void skipToNextStage() {
-    _currentTimer?.cancel();
-    _currentStageIndex++;
-    _handleStageTransition();
-  }
-  
-  void _startCurrentStage() {
-    if (_currentStageIndex >= _stages.length) {
-      _handleCycleCompletion();
-      return;
-    }
-    
-    final currentStage = _stages[_currentStageIndex];
-    
+  void _startTicker() {
     _currentTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_remainingSeconds <= 0) {
         timer.cancel();
+        _audioPlayer.stop(); // Stop any looping sounds from previous stage
         onStageComplete?.call(_currentStageIndex);
         _currentStageIndex++;
         _handleStageTransition();
@@ -113,12 +102,35 @@ class TimerEngine {
       final nextStage = _stages[_currentStageIndex];
       _remainingSeconds = nextStage.durationSeconds;
       
-      // Play sound for the new stage
-      _playSound(nextStage.sound);
-      
       if (_isRunning) {
-        _startCurrentStage();
+        _playCurrentStageSound();
+        _startTicker();
       }
+    }
+  }
+
+  Future<void> _playCurrentStageSound() async {
+    if (_currentStageIndex >= _stages.length) return;
+    
+    final stage = _stages[_currentStageIndex];
+    final soundDef = SoundHelper.getByFileName(stage.sound);
+    
+    if (soundDef == null) return;
+
+    try {
+      await _audioPlayer.stop(); // Stop previous sound
+      
+      if (soundDef.type == SoundType.loop) {
+        // For Fuse/Loops: Set to loop and play
+        await _audioPlayer.setReleaseMode(ReleaseMode.loop);
+        await _audioPlayer.play(AssetSource('sounds/${soundDef.fileName}'));
+      } else {
+        // For Triggers: Set to stop (play once) and play
+        await _audioPlayer.setReleaseMode(ReleaseMode.stop);
+        await _audioPlayer.play(AssetSource('sounds/${soundDef.fileName}'));
+      }
+    } catch (e) {
+      print('Error playing sound: $e');
     }
   }
   
@@ -128,47 +140,12 @@ class TimerEngine {
     
     if (_currentCycle >= _totalCycles) {
       _isRunning = false;
+      _audioPlayer.stop();
       onAllCyclesComplete?.call();
     } else {
-      // Reset to start of cycle
       _currentStageIndex = 0;
       _handleStageTransition();
     }
-  }
-  
-  Future<void> _playSound(String soundAsset) async {
-    try {
-      // For now, we'll use a placeholder sound system
-      // You can replace this with actual sound files
-      if (soundAsset.isNotEmpty) {
-        // Simple system sound as placeholder
-        await _audioPlayer.play(AssetSource(soundAsset));
-        print('Playing sound: $soundAsset');
-      }
-    } catch (e) {
-      print('Error playing sound: $e');
-    }
-  }
-  
-  String getCurrentStageName() {
-    if (_currentStageIndex < _stages.length) {
-      return _stages[_currentStageIndex].name;
-    }
-    return '';
-  }
-  
-  String getCurrentStageColor() {
-    if (_currentStageIndex < _stages.length) {
-      return _stages[_currentStageIndex].color;
-    }
-    return 'blue';
-  }
-  
-  int getCurrentStageDuration() {
-    if (_currentStageIndex < _stages.length) {
-      return _stages[_currentStageIndex].durationSeconds;
-    }
-    return 0;
   }
   
   void dispose() {
