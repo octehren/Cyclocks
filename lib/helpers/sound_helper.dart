@@ -21,7 +21,7 @@ class SoundHelper {
   static const List<AppSound> allSounds = [
     // // --- Triggers (For Timer Stages) ---
     AppSound(name: 'Ding', fileName: 'ding_bellboy.wav', type: SoundType.trigger),
-    AppSound(name: 'Double Ding', fileName: 'ding_double_bellboy.wav', type: SoundType.trigger),
+    AppSound(name: 'Double Ding', fileName: 'ding_double_bellboy.ogg', type: SoundType.trigger),
     AppSound(name: 'Powerup', fileName: 'powerup.wav', type: SoundType.trigger),
     AppSound(name: 'Rooster', fileName: 'rooster.wav', type: SoundType.trigger),
     AppSound(name: 'Xylophone', fileName: 'mxylo2.ogg', type: SoundType.trigger),
