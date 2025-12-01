@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cyclock/data/database.dart';
 import 'package:drift/drift.dart' show Value;
+import 'package:cyclock/helpers/sound_helper.dart';
 
 class CyclockEditScreen extends StatefulWidget {
   final AppDatabase database;
@@ -33,8 +34,6 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
     Colors.purple, Colors.pink, Colors.teal, Colors.amber, Colors.grey
   ];
   
-  final List<String> _availableSounds = ['timer_start', 'bell', 'chime', 'beep', 'alarm', 'fuseburn.wav'];
-
   @override
   void initState() {
     super.initState();
@@ -116,7 +115,7 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
         durationMinutes: 25,
         durationSeconds: 0,
         color: Colors.red,
-        sound: 'timer_start',
+        sound: SoundHelper.triggerSounds[0].fileName,
       ));
       _cycles.add(newCycle);
     });
@@ -129,7 +128,7 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
         durationMinutes: 1,
         durationSeconds: 0,
         color: _availableColors[0],
-        sound: _availableSounds[0],
+        sound: SoundHelper.triggerSounds[0].fileName,
       ));
     });
   }
@@ -281,10 +280,14 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
                 ),
               ),
               const SizedBox(width: 16),
+              // Fuse Sound Dropdown (Loops only)
               DropdownButton<String>(
                 value: _fuseSound,
                 underline: Container(),
-                items: _availableSounds.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                // If current value isn't in loop list (e.g. imported legacy data), handle gracefully
+                items: SoundHelper.loopSounds.map((s) {
+                  return DropdownMenuItem(value: s.fileName, child: Text(s.name));
+                }).toList(),
                 onChanged: (v) => setState(() => _fuseSound = v!),
               ),
             ],
@@ -440,12 +443,15 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
                const Spacer(),
                const Icon(Icons.volume_up, size: 16, color: Colors.grey),
                const SizedBox(width: 4),
+               // Timer Sound Dropdown (Triggers only)
                DropdownButton<String>(
                  value: stage.sound,
                  isDense: true,
                  underline: Container(),
                  style: const TextStyle(fontSize: 12, color: Colors.black),
-                 items: _availableSounds.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                 items: SoundHelper.triggerSounds.map((s) {
+                   return DropdownMenuItem(value: s.fileName, child: Text(s.name));
+                 }).toList(),
                  onChanged: (v) => setState(() => stage.sound = v!),
                )
             ],
