@@ -53,7 +53,7 @@ class DatabaseHelper {
       name: const Value('Fuse'),
       durationSeconds: const Value(60),
       color: const Value('red'),
-      sound: const Value('fuse_burning'),
+      sound: const Value('fuseburn.wav'),
       isFuse: const Value(true),
     ));
     
@@ -118,7 +118,7 @@ class DatabaseHelper {
       name: const Value('Fuse'),
       durationSeconds: const Value(10),
       color: const Value('darkblue'),
-      sound: const Value('fuse_burning'),
+      sound: const Value('fuseburn.wav'),
       isFuse: const Value(true),
     ));
     
@@ -171,7 +171,7 @@ class DatabaseHelper {
       name: const Value('Fuse'),
       durationSeconds: const Value(10),
       color: const Value('pink'),
-      sound: const Value('fuse_burning'),
+      sound: const Value('fuseburn.wav'),
       isFuse: const Value(true),
     ));
     

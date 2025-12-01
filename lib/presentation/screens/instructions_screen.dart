@@ -22,51 +22,55 @@ class InstructionsScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            
             _buildInstructionStep(
               number: 1,
+              title: 'What Are Cyclocks?',
+              description: 'A cyclock is a set of cycles, and a cycle is a set of timers. For example, suppose a person will use the Pomodoro technique to structure a moment of focused work, in 3 bursts of 25 minutes of work followed by 5 minutes of rest and then a final burst of 25 minutes of work followed by 30 minutes of rest. This will be represented by 3 cycles of a 25 minutes timer followed by a 5 minutes one, and then one cycle of a 25 minutes timer followed by a 30 minutes one.',
+            ),
+            _buildInstructionStep(
+              number: 2,
               title: 'Browse Cyclocks',
               description: 'On the main screen, you can see all your available cyclocks. Tap any cyclock to start it.',
             ),
             
             _buildInstructionStep(
-              number: 2,
-              title: 'Create Custom Cyclocks',
-              description: 'Tap the "+" button to create your own cyclock with custom timers and cycles.',
-            ),
-            
-            _buildInstructionStep(
               number: 3,
-              title: 'Cyclock Structure',
-              description: 'Each cyclock consists of an optional fuse timer and multiple timer stages that repeat in cycles.',
+              title: 'Create Custom Cyclocks',
+              description: 'Tap the "+" button to create your own cyclock with custom cycles and timers.',
             ),
             
             _buildInstructionStep(
               number: 4,
-              title: 'Fuse Timer',
-              description: 'The fuse is an initial countdown that plays a burning fuse sound before starting the main timers.',
+              title: 'Cyclock Structure',
+              description: 'Each cyclock consists of an optional fuse timer and one or more cycles, each with one or more timers. Every timer can be assigned a custom sound on its beginning',
             ),
             
             _buildInstructionStep(
               number: 5,
+              title: 'Fuse Timer',
+              description: 'The fuse is an initial countdown to kickstart the cycles. It plays a sound in loop.',
+            ),
+            
+            _buildInstructionStep(
+              number: 6,
               title: 'Timer Stages',
               description: 'Each timer stage can have its own duration, color, and trigger sound.',
             ),
             
             _buildInstructionStep(
-              number: 6,
+              number: 7,
               title: 'Cycles',
               description: 'Set how many times the timer sequence should repeat, or set it to repeat indefinitely.',
             ),
             
             _buildInstructionStep(
-              number: 7,
+              number: 8,
               title: 'Running Cyclocks',
-              description: 'During execution, you can see visual representations of time remaining for each timer.',
+              description: 'During execution, you can see visual representations of time remaining for each timer. You can also set individualized properties for each cyclock.',
             ),
             
             _buildInstructionStep(
-              number: 8,
+              number: 9,
               title: 'Settings',
               description: 'Access settings to toggle dark mode, change language, export/import data, and read instructions.',
             ),

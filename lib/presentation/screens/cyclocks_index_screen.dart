@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:cyclock/data/database.dart';
-import 'package:cyclock/providers/settings_provider.dart';
 import 'package:cyclock/presentation/screens/cyclock_running_screen.dart';
 import 'package:cyclock/presentation/screens/settings_screen.dart';
 import 'package:cyclock/presentation/screens/cyclock_edit_screen.dart';
@@ -25,11 +23,47 @@ class _CyclocksIndexScreenState extends State<CyclocksIndexScreen> {
   }
   
   Future<void> _loadCyclocks() async {
-    // accessing DAO
     final cyclocks = await widget.database.cyclocksDao.getAllCyclocks();
     setState(() {
       _cyclocks = cyclocks;
     });
+  }
+
+  // Added: Helper to confirm and execute deletion
+  Future<void> _confirmDelete(Cyclock cyclock) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Cyclock?'),
+        content: Text('Are you sure you want to delete "${cyclock.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      // Execute as a transaction to ensure stages are deleted with the cyclock
+      await widget.database.transaction(() async {
+        await widget.database.timerStagesDao.deleteStagesForCyclock(cyclock.id);
+        await widget.database.cyclocksDao.deleteCyclock(cyclock);
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${cyclock.name} deleted')),
+        );
+        _loadCyclocks();
+      }
+    }
   }
   
   int _getCrossAxisCount(BuildContext context) {
@@ -47,7 +81,6 @@ class _CyclocksIndexScreenState extends State<CyclocksIndexScreen> {
   
   Color _getPrimaryColor(String colorPalette) {
     try {
-      // Simple color mapping - you can enhance this with JSON parsing
       if (colorPalette.contains('red')) return Colors.red;
       if (colorPalette.contains('blue')) return Colors.blue;
       if (colorPalette.contains('pink')) return Colors.pink;
@@ -75,7 +108,7 @@ class _CyclocksIndexScreenState extends State<CyclocksIndexScreen> {
                 MaterialPageRoute(
                   builder: (context) => SettingsScreen(database: widget.database),
                 ),
-              );
+              ).then((_) => _loadCyclocks()); // Refresh in case data changed in settings
             },
           ),
         ],
@@ -91,7 +124,6 @@ class _CyclocksIndexScreenState extends State<CyclocksIndexScreen> {
         itemCount: _cyclocks.length + 1, // +1 for add button
         itemBuilder: (context, index) {
           if (index == _cyclocks.length) {
-            // Add new cyclock button
             return _buildAddCyclockButton();
           } else {
             final cyclock = _cyclocks[index];
@@ -105,55 +137,115 @@ class _CyclocksIndexScreenState extends State<CyclocksIndexScreen> {
   Widget _buildCyclockCard(Cyclock cyclock) {
     return Card(
       elevation: 4,
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => CyclockRunningScreen(
-                database: widget.database,
-                cyclock: cyclock,
-              ),
-            ),
-          ).then((_) => _loadCyclocks()); // Reload when coming back;
-        },
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: _getPrimaryColor(cyclock.colorPalette),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.timer,
-                color: Colors.white,
-                size: 30,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              cyclock.name,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            if (cyclock.isDefault) ...[
-              const SizedBox(height: 4),
-              Text(
-                'Default',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
+      clipBehavior: Clip.antiAlias, // Ensures the InkWell and Menu don't overflow rounded corners
+      child: Stack(
+        children: [
+          // 1. Main Action: Tap to Run
+          Positioned.fill(
+            child: InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CyclockRunningScreen(
+                      database: widget.database,
+                      cyclock: cyclock,
+                    ),
+                  ),
+                ).then((_) => _loadCyclocks());
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 50, 
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: _getPrimaryColor(cyclock.colorPalette),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.timer,
+                        color: Colors.white,
+                        size: 25,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      cyclock.name,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (cyclock.isDefault) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Default',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
-            ],
-          ],
-        ),
+            ),
+          ),
+
+          // 2. Secondary Action: Top Right Menu
+          Positioned(
+            top: 0,
+            right: 0,
+            child: PopupMenuButton<String>(
+              icon: Icon(Icons.more_vert, size: 20, color: Colors.grey[600]),
+              tooltip: 'Options',
+              onSelected: (value) {
+                if (value == 'edit') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CyclockEditScreen(
+                        database: widget.database,
+                        cyclock: cyclock,
+                      ),
+                    ),
+                  ).then((_) => _loadCyclocks());
+                } else if (value == 'delete') {
+                  _confirmDelete(cyclock);
+                }
+              },
+              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                const PopupMenuItem<String>(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit, size: 20, color: Colors.grey),
+                      SizedBox(width: 12),
+                      Text('Edit'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete, size: 20, color: Colors.red),
+                      SizedBox(width: 12),
+                      Text('Delete', style: TextStyle(color: Colors.red)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -164,13 +256,14 @@ class _CyclocksIndexScreenState extends State<CyclocksIndexScreen> {
       color: Theme.of(context).colorScheme.surface,
       child: InkWell(
         onTap: () {
-          // Navigate to create cyclock screen
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => CyclockEditScreen(database: widget.database),
+              builder: (context) => CyclockEditScreen(
+                database: widget.database,
+              ),
             ),
-          ).then((_) => _loadCyclocks()); // Reload when coming back
+          ).then((_) => _loadCyclocks());
         },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

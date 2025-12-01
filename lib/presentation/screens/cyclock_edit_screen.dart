@@ -23,7 +23,7 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
   // Cyclock properties
   bool _hasFuse = false;
   int _fuseDuration = 60; // seconds
-  String _fuseSound = 'fuse_burning';
+  String _fuseSound = 'fuseburn.wav';
   bool _repeatIndefinitely = false;
   int _repeatCount = 1;
   
