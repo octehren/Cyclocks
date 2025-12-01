@@ -63,6 +63,7 @@ class AppTheme {
       onError: AppColors.onError,
     ),
     useMaterial3: true,
+    fontFamily: 'Adwaita',
   );
 
   static ThemeData darkTheme = ThemeData(
@@ -73,5 +74,6 @@ class AppTheme {
       secondary: AppColors.secondary,
     ),
     useMaterial3: true,
+    fontFamily: 'Adwaita',
   );
 }
