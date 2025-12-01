@@ -22,8 +22,8 @@ class DatabaseHelper {
     await _createCycle(
       db, pomodoroId, 0, "Core Intervals", 3, "red",
       [
-        _makeStage(0, 'Work', 25 * 60, 'red', 'timer_start'),
-        _makeStage(1, 'Short Break', 5 * 60, 'green', 'timer_start'),
+        _makeStage(0, 'Work', 25 * 60, 'red', 'rooster.wav'),
+        _makeStage(1, 'Short Break', 5 * 60, 'green', 'ding_bellboy.wav'),
       ]
     );
 
@@ -31,8 +31,8 @@ class DatabaseHelper {
     await _createCycle(
       db, pomodoroId, 1, "Final Set", 1, "green",
       [
-        _makeStage(0, 'Work', 25 * 60, 'red', 'timer_start'),
-        _makeStage(1, 'Long Break', 30 * 60, 'green', 'timer_start'),
+        _makeStage(0, 'Work', 25 * 60, 'red', 'rooster.wav'),
+        _makeStage(1, 'Long Break', 30 * 60, 'green', 'ding_double_bellboy.ogg'),
       ]
     );
     
@@ -51,8 +51,8 @@ class DatabaseHelper {
     await _createCycle(
       db, squatsId, 0, "Sets", 2, "darkblue",
       [
-        _makeStage(0, 'Exercise', 2 * 60, 'darkblue', 'timer_start'),
-        _makeStage(1, 'Rest', 30, 'grey', 'timer_start'),
+        _makeStage(0, 'Exercise', 2 * 60, 'darkblue', 'powerup.wav'),
+        _makeStage(1, 'Rest', 30, 'grey', 'ding_double_bellboy.wav'),
       ]
     );
 
