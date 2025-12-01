@@ -6,8 +6,13 @@ part of 'database.dart';
 mixin _$CyclocksDaoMixin on DatabaseAccessor<AppDatabase> {
   $CyclocksTable get cyclocks => attachedDatabase.cyclocks;
 }
+mixin _$CyclesDaoMixin on DatabaseAccessor<AppDatabase> {
+  $CyclocksTable get cyclocks => attachedDatabase.cyclocks;
+  $CyclesTable get cycles => attachedDatabase.cycles;
+}
 mixin _$TimerStagesDaoMixin on DatabaseAccessor<AppDatabase> {
   $CyclocksTable get cyclocks => attachedDatabase.cyclocks;
+  $CyclesTable get cycles => attachedDatabase.cycles;
   $TimerStagesTable get timerStages => attachedDatabase.timerStages;
 }
 
@@ -38,32 +43,16 @@ class $CyclocksTable extends Cyclocks with TableInfo<$CyclocksTable, Cyclock> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _isDefaultMeta = const VerificationMeta(
-    'isDefault',
+  static const VerificationMeta _colorPaletteMeta = const VerificationMeta(
+    'colorPalette',
   );
   @override
-  late final GeneratedColumn<bool> isDefault = GeneratedColumn<bool>(
-    'is_default',
+  late final GeneratedColumn<String> colorPalette = GeneratedColumn<String>(
+    'color_palette',
     aliasedName,
     false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("is_default" IN (0, 1))',
-    ),
-    defaultValue: const Constant(false),
-  );
-  static const VerificationMeta _repeatCountMeta = const VerificationMeta(
-    'repeatCount',
-  );
-  @override
-  late final GeneratedColumn<int> repeatCount = GeneratedColumn<int>(
-    'repeat_count',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(1),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
   );
   static const VerificationMeta _repeatIndefinitelyMeta =
       const VerificationMeta('repeatIndefinitely');
@@ -79,25 +68,54 @@ class $CyclocksTable extends Cyclocks with TableInfo<$CyclocksTable, Cyclock> {
     ),
     defaultValue: const Constant(false),
   );
-  static const VerificationMeta _colorPaletteMeta = const VerificationMeta(
-    'colorPalette',
+  static const VerificationMeta _hasFuseMeta = const VerificationMeta(
+    'hasFuse',
   );
   @override
-  late final GeneratedColumn<String> colorPalette = GeneratedColumn<String>(
-    'color_palette',
+  late final GeneratedColumn<bool> hasFuse = GeneratedColumn<bool>(
+    'has_fuse',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("has_fuse" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _fuseDurationMeta = const VerificationMeta(
+    'fuseDuration',
+  );
+  @override
+  late final GeneratedColumn<int> fuseDuration = GeneratedColumn<int>(
+    'fuse_duration',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(10),
+  );
+  static const VerificationMeta _fuseSoundMeta = const VerificationMeta(
+    'fuseSound',
+  );
+  @override
+  late final GeneratedColumn<String> fuseSound = GeneratedColumn<String>(
+    'fuse_sound',
     aliasedName,
     false,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('fuseburn.wav'),
   );
   @override
   List<GeneratedColumn> get $columns => [
     id,
     name,
-    isDefault,
-    repeatCount,
-    repeatIndefinitely,
     colorPalette,
+    repeatIndefinitely,
+    hasFuse,
+    fuseDuration,
+    fuseSound,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -122,30 +140,6 @@ class $CyclocksTable extends Cyclocks with TableInfo<$CyclocksTable, Cyclock> {
     } else if (isInserting) {
       context.missing(_nameMeta);
     }
-    if (data.containsKey('is_default')) {
-      context.handle(
-        _isDefaultMeta,
-        isDefault.isAcceptableOrUnknown(data['is_default']!, _isDefaultMeta),
-      );
-    }
-    if (data.containsKey('repeat_count')) {
-      context.handle(
-        _repeatCountMeta,
-        repeatCount.isAcceptableOrUnknown(
-          data['repeat_count']!,
-          _repeatCountMeta,
-        ),
-      );
-    }
-    if (data.containsKey('repeat_indefinitely')) {
-      context.handle(
-        _repeatIndefinitelyMeta,
-        repeatIndefinitely.isAcceptableOrUnknown(
-          data['repeat_indefinitely']!,
-          _repeatIndefinitelyMeta,
-        ),
-      );
-    }
     if (data.containsKey('color_palette')) {
       context.handle(
         _colorPaletteMeta,
@@ -156,6 +150,36 @@ class $CyclocksTable extends Cyclocks with TableInfo<$CyclocksTable, Cyclock> {
       );
     } else if (isInserting) {
       context.missing(_colorPaletteMeta);
+    }
+    if (data.containsKey('repeat_indefinitely')) {
+      context.handle(
+        _repeatIndefinitelyMeta,
+        repeatIndefinitely.isAcceptableOrUnknown(
+          data['repeat_indefinitely']!,
+          _repeatIndefinitelyMeta,
+        ),
+      );
+    }
+    if (data.containsKey('has_fuse')) {
+      context.handle(
+        _hasFuseMeta,
+        hasFuse.isAcceptableOrUnknown(data['has_fuse']!, _hasFuseMeta),
+      );
+    }
+    if (data.containsKey('fuse_duration')) {
+      context.handle(
+        _fuseDurationMeta,
+        fuseDuration.isAcceptableOrUnknown(
+          data['fuse_duration']!,
+          _fuseDurationMeta,
+        ),
+      );
+    }
+    if (data.containsKey('fuse_sound')) {
+      context.handle(
+        _fuseSoundMeta,
+        fuseSound.isAcceptableOrUnknown(data['fuse_sound']!, _fuseSoundMeta),
+      );
     }
     return context;
   }
@@ -174,21 +198,25 @@ class $CyclocksTable extends Cyclocks with TableInfo<$CyclocksTable, Cyclock> {
         DriftSqlType.string,
         data['${effectivePrefix}name'],
       )!,
-      isDefault: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}is_default'],
-      )!,
-      repeatCount: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}repeat_count'],
+      colorPalette: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}color_palette'],
       )!,
       repeatIndefinitely: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}repeat_indefinitely'],
       )!,
-      colorPalette: attachedDatabase.typeMapping.read(
+      hasFuse: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}has_fuse'],
+      )!,
+      fuseDuration: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}fuse_duration'],
+      )!,
+      fuseSound: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}color_palette'],
+        data['${effectivePrefix}fuse_sound'],
       )!,
     );
   }
@@ -202,27 +230,30 @@ class $CyclocksTable extends Cyclocks with TableInfo<$CyclocksTable, Cyclock> {
 class Cyclock extends DataClass implements Insertable<Cyclock> {
   final int id;
   final String name;
-  final bool isDefault;
-  final int repeatCount;
-  final bool repeatIndefinitely;
   final String colorPalette;
+  final bool repeatIndefinitely;
+  final bool hasFuse;
+  final int fuseDuration;
+  final String fuseSound;
   const Cyclock({
     required this.id,
     required this.name,
-    required this.isDefault,
-    required this.repeatCount,
-    required this.repeatIndefinitely,
     required this.colorPalette,
+    required this.repeatIndefinitely,
+    required this.hasFuse,
+    required this.fuseDuration,
+    required this.fuseSound,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['name'] = Variable<String>(name);
-    map['is_default'] = Variable<bool>(isDefault);
-    map['repeat_count'] = Variable<int>(repeatCount);
-    map['repeat_indefinitely'] = Variable<bool>(repeatIndefinitely);
     map['color_palette'] = Variable<String>(colorPalette);
+    map['repeat_indefinitely'] = Variable<bool>(repeatIndefinitely);
+    map['has_fuse'] = Variable<bool>(hasFuse);
+    map['fuse_duration'] = Variable<int>(fuseDuration);
+    map['fuse_sound'] = Variable<String>(fuseSound);
     return map;
   }
 
@@ -230,10 +261,11 @@ class Cyclock extends DataClass implements Insertable<Cyclock> {
     return CyclocksCompanion(
       id: Value(id),
       name: Value(name),
-      isDefault: Value(isDefault),
-      repeatCount: Value(repeatCount),
-      repeatIndefinitely: Value(repeatIndefinitely),
       colorPalette: Value(colorPalette),
+      repeatIndefinitely: Value(repeatIndefinitely),
+      hasFuse: Value(hasFuse),
+      fuseDuration: Value(fuseDuration),
+      fuseSound: Value(fuseSound),
     );
   }
 
@@ -245,10 +277,11 @@ class Cyclock extends DataClass implements Insertable<Cyclock> {
     return Cyclock(
       id: serializer.fromJson<int>(json['id']),
       name: serializer.fromJson<String>(json['name']),
-      isDefault: serializer.fromJson<bool>(json['isDefault']),
-      repeatCount: serializer.fromJson<int>(json['repeatCount']),
-      repeatIndefinitely: serializer.fromJson<bool>(json['repeatIndefinitely']),
       colorPalette: serializer.fromJson<String>(json['colorPalette']),
+      repeatIndefinitely: serializer.fromJson<bool>(json['repeatIndefinitely']),
+      hasFuse: serializer.fromJson<bool>(json['hasFuse']),
+      fuseDuration: serializer.fromJson<int>(json['fuseDuration']),
+      fuseSound: serializer.fromJson<String>(json['fuseSound']),
     );
   }
   @override
@@ -257,42 +290,46 @@ class Cyclock extends DataClass implements Insertable<Cyclock> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'name': serializer.toJson<String>(name),
-      'isDefault': serializer.toJson<bool>(isDefault),
-      'repeatCount': serializer.toJson<int>(repeatCount),
-      'repeatIndefinitely': serializer.toJson<bool>(repeatIndefinitely),
       'colorPalette': serializer.toJson<String>(colorPalette),
+      'repeatIndefinitely': serializer.toJson<bool>(repeatIndefinitely),
+      'hasFuse': serializer.toJson<bool>(hasFuse),
+      'fuseDuration': serializer.toJson<int>(fuseDuration),
+      'fuseSound': serializer.toJson<String>(fuseSound),
     };
   }
 
   Cyclock copyWith({
     int? id,
     String? name,
-    bool? isDefault,
-    int? repeatCount,
-    bool? repeatIndefinitely,
     String? colorPalette,
+    bool? repeatIndefinitely,
+    bool? hasFuse,
+    int? fuseDuration,
+    String? fuseSound,
   }) => Cyclock(
     id: id ?? this.id,
     name: name ?? this.name,
-    isDefault: isDefault ?? this.isDefault,
-    repeatCount: repeatCount ?? this.repeatCount,
-    repeatIndefinitely: repeatIndefinitely ?? this.repeatIndefinitely,
     colorPalette: colorPalette ?? this.colorPalette,
+    repeatIndefinitely: repeatIndefinitely ?? this.repeatIndefinitely,
+    hasFuse: hasFuse ?? this.hasFuse,
+    fuseDuration: fuseDuration ?? this.fuseDuration,
+    fuseSound: fuseSound ?? this.fuseSound,
   );
   Cyclock copyWithCompanion(CyclocksCompanion data) {
     return Cyclock(
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
-      isDefault: data.isDefault.present ? data.isDefault.value : this.isDefault,
-      repeatCount: data.repeatCount.present
-          ? data.repeatCount.value
-          : this.repeatCount,
-      repeatIndefinitely: data.repeatIndefinitely.present
-          ? data.repeatIndefinitely.value
-          : this.repeatIndefinitely,
       colorPalette: data.colorPalette.present
           ? data.colorPalette.value
           : this.colorPalette,
+      repeatIndefinitely: data.repeatIndefinitely.present
+          ? data.repeatIndefinitely.value
+          : this.repeatIndefinitely,
+      hasFuse: data.hasFuse.present ? data.hasFuse.value : this.hasFuse,
+      fuseDuration: data.fuseDuration.present
+          ? data.fuseDuration.value
+          : this.fuseDuration,
+      fuseSound: data.fuseSound.present ? data.fuseSound.value : this.fuseSound,
     );
   }
 
@@ -301,10 +338,11 @@ class Cyclock extends DataClass implements Insertable<Cyclock> {
     return (StringBuffer('Cyclock(')
           ..write('id: $id, ')
           ..write('name: $name, ')
-          ..write('isDefault: $isDefault, ')
-          ..write('repeatCount: $repeatCount, ')
+          ..write('colorPalette: $colorPalette, ')
           ..write('repeatIndefinitely: $repeatIndefinitely, ')
-          ..write('colorPalette: $colorPalette')
+          ..write('hasFuse: $hasFuse, ')
+          ..write('fuseDuration: $fuseDuration, ')
+          ..write('fuseSound: $fuseSound')
           ..write(')'))
         .toString();
   }
@@ -313,10 +351,11 @@ class Cyclock extends DataClass implements Insertable<Cyclock> {
   int get hashCode => Object.hash(
     id,
     name,
-    isDefault,
-    repeatCount,
-    repeatIndefinitely,
     colorPalette,
+    repeatIndefinitely,
+    hasFuse,
+    fuseDuration,
+    fuseSound,
   );
   @override
   bool operator ==(Object other) =>
@@ -324,69 +363,77 @@ class Cyclock extends DataClass implements Insertable<Cyclock> {
       (other is Cyclock &&
           other.id == this.id &&
           other.name == this.name &&
-          other.isDefault == this.isDefault &&
-          other.repeatCount == this.repeatCount &&
+          other.colorPalette == this.colorPalette &&
           other.repeatIndefinitely == this.repeatIndefinitely &&
-          other.colorPalette == this.colorPalette);
+          other.hasFuse == this.hasFuse &&
+          other.fuseDuration == this.fuseDuration &&
+          other.fuseSound == this.fuseSound);
 }
 
 class CyclocksCompanion extends UpdateCompanion<Cyclock> {
   final Value<int> id;
   final Value<String> name;
-  final Value<bool> isDefault;
-  final Value<int> repeatCount;
-  final Value<bool> repeatIndefinitely;
   final Value<String> colorPalette;
+  final Value<bool> repeatIndefinitely;
+  final Value<bool> hasFuse;
+  final Value<int> fuseDuration;
+  final Value<String> fuseSound;
   const CyclocksCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
-    this.isDefault = const Value.absent(),
-    this.repeatCount = const Value.absent(),
-    this.repeatIndefinitely = const Value.absent(),
     this.colorPalette = const Value.absent(),
+    this.repeatIndefinitely = const Value.absent(),
+    this.hasFuse = const Value.absent(),
+    this.fuseDuration = const Value.absent(),
+    this.fuseSound = const Value.absent(),
   });
   CyclocksCompanion.insert({
     this.id = const Value.absent(),
     required String name,
-    this.isDefault = const Value.absent(),
-    this.repeatCount = const Value.absent(),
-    this.repeatIndefinitely = const Value.absent(),
     required String colorPalette,
+    this.repeatIndefinitely = const Value.absent(),
+    this.hasFuse = const Value.absent(),
+    this.fuseDuration = const Value.absent(),
+    this.fuseSound = const Value.absent(),
   }) : name = Value(name),
        colorPalette = Value(colorPalette);
   static Insertable<Cyclock> custom({
     Expression<int>? id,
     Expression<String>? name,
-    Expression<bool>? isDefault,
-    Expression<int>? repeatCount,
-    Expression<bool>? repeatIndefinitely,
     Expression<String>? colorPalette,
+    Expression<bool>? repeatIndefinitely,
+    Expression<bool>? hasFuse,
+    Expression<int>? fuseDuration,
+    Expression<String>? fuseSound,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (name != null) 'name': name,
-      if (isDefault != null) 'is_default': isDefault,
-      if (repeatCount != null) 'repeat_count': repeatCount,
-      if (repeatIndefinitely != null) 'repeat_indefinitely': repeatIndefinitely,
       if (colorPalette != null) 'color_palette': colorPalette,
+      if (repeatIndefinitely != null) 'repeat_indefinitely': repeatIndefinitely,
+      if (hasFuse != null) 'has_fuse': hasFuse,
+      if (fuseDuration != null) 'fuse_duration': fuseDuration,
+      if (fuseSound != null) 'fuse_sound': fuseSound,
     });
   }
 
   CyclocksCompanion copyWith({
     Value<int>? id,
     Value<String>? name,
-    Value<bool>? isDefault,
-    Value<int>? repeatCount,
-    Value<bool>? repeatIndefinitely,
     Value<String>? colorPalette,
+    Value<bool>? repeatIndefinitely,
+    Value<bool>? hasFuse,
+    Value<int>? fuseDuration,
+    Value<String>? fuseSound,
   }) {
     return CyclocksCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
-      isDefault: isDefault ?? this.isDefault,
-      repeatCount: repeatCount ?? this.repeatCount,
-      repeatIndefinitely: repeatIndefinitely ?? this.repeatIndefinitely,
       colorPalette: colorPalette ?? this.colorPalette,
+      repeatIndefinitely: repeatIndefinitely ?? this.repeatIndefinitely,
+      hasFuse: hasFuse ?? this.hasFuse,
+      fuseDuration: fuseDuration ?? this.fuseDuration,
+      fuseSound: fuseSound ?? this.fuseSound,
     );
   }
 
@@ -399,17 +446,20 @@ class CyclocksCompanion extends UpdateCompanion<Cyclock> {
     if (name.present) {
       map['name'] = Variable<String>(name.value);
     }
-    if (isDefault.present) {
-      map['is_default'] = Variable<bool>(isDefault.value);
-    }
-    if (repeatCount.present) {
-      map['repeat_count'] = Variable<int>(repeatCount.value);
+    if (colorPalette.present) {
+      map['color_palette'] = Variable<String>(colorPalette.value);
     }
     if (repeatIndefinitely.present) {
       map['repeat_indefinitely'] = Variable<bool>(repeatIndefinitely.value);
     }
-    if (colorPalette.present) {
-      map['color_palette'] = Variable<String>(colorPalette.value);
+    if (hasFuse.present) {
+      map['has_fuse'] = Variable<bool>(hasFuse.value);
+    }
+    if (fuseDuration.present) {
+      map['fuse_duration'] = Variable<int>(fuseDuration.value);
+    }
+    if (fuseSound.present) {
+      map['fuse_sound'] = Variable<String>(fuseSound.value);
     }
     return map;
   }
@@ -419,21 +469,21 @@ class CyclocksCompanion extends UpdateCompanion<Cyclock> {
     return (StringBuffer('CyclocksCompanion(')
           ..write('id: $id, ')
           ..write('name: $name, ')
-          ..write('isDefault: $isDefault, ')
-          ..write('repeatCount: $repeatCount, ')
+          ..write('colorPalette: $colorPalette, ')
           ..write('repeatIndefinitely: $repeatIndefinitely, ')
-          ..write('colorPalette: $colorPalette')
+          ..write('hasFuse: $hasFuse, ')
+          ..write('fuseDuration: $fuseDuration, ')
+          ..write('fuseSound: $fuseSound')
           ..write(')'))
         .toString();
   }
 }
 
-class $TimerStagesTable extends TimerStages
-    with TableInfo<$TimerStagesTable, TimerStage> {
+class $CyclesTable extends Cycles with TableInfo<$CyclesTable, Cycle> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $TimerStagesTable(this.attachedDatabase, [this._alias]);
+  $CyclesTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -458,7 +508,420 @@ class $TimerStagesTable extends TimerStages
     type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES cyclocks (id)',
+      'REFERENCES cyclocks (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _orderIndexMeta = const VerificationMeta(
+    'orderIndex',
+  );
+  @override
+  late final GeneratedColumn<int> orderIndex = GeneratedColumn<int>(
+    'order_index',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('Cycle'),
+  );
+  static const VerificationMeta _repeatCountMeta = const VerificationMeta(
+    'repeatCount',
+  );
+  @override
+  late final GeneratedColumn<int> repeatCount = GeneratedColumn<int>(
+    'repeat_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _backgroundColorMeta = const VerificationMeta(
+    'backgroundColor',
+  );
+  @override
+  late final GeneratedColumn<String> backgroundColor = GeneratedColumn<String>(
+    'background_color',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('blue'),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    cyclockId,
+    orderIndex,
+    name,
+    repeatCount,
+    backgroundColor,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cycles';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Cycle> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('cyclock_id')) {
+      context.handle(
+        _cyclockIdMeta,
+        cyclockId.isAcceptableOrUnknown(data['cyclock_id']!, _cyclockIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_cyclockIdMeta);
+    }
+    if (data.containsKey('order_index')) {
+      context.handle(
+        _orderIndexMeta,
+        orderIndex.isAcceptableOrUnknown(data['order_index']!, _orderIndexMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_orderIndexMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    }
+    if (data.containsKey('repeat_count')) {
+      context.handle(
+        _repeatCountMeta,
+        repeatCount.isAcceptableOrUnknown(
+          data['repeat_count']!,
+          _repeatCountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('background_color')) {
+      context.handle(
+        _backgroundColorMeta,
+        backgroundColor.isAcceptableOrUnknown(
+          data['background_color']!,
+          _backgroundColorMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Cycle map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Cycle(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      cyclockId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}cyclock_id'],
+      )!,
+      orderIndex: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}order_index'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      repeatCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}repeat_count'],
+      )!,
+      backgroundColor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}background_color'],
+      )!,
+    );
+  }
+
+  @override
+  $CyclesTable createAlias(String alias) {
+    return $CyclesTable(attachedDatabase, alias);
+  }
+}
+
+class Cycle extends DataClass implements Insertable<Cycle> {
+  final int id;
+  final int cyclockId;
+  final int orderIndex;
+  final String name;
+  final int repeatCount;
+  final String backgroundColor;
+  const Cycle({
+    required this.id,
+    required this.cyclockId,
+    required this.orderIndex,
+    required this.name,
+    required this.repeatCount,
+    required this.backgroundColor,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['cyclock_id'] = Variable<int>(cyclockId);
+    map['order_index'] = Variable<int>(orderIndex);
+    map['name'] = Variable<String>(name);
+    map['repeat_count'] = Variable<int>(repeatCount);
+    map['background_color'] = Variable<String>(backgroundColor);
+    return map;
+  }
+
+  CyclesCompanion toCompanion(bool nullToAbsent) {
+    return CyclesCompanion(
+      id: Value(id),
+      cyclockId: Value(cyclockId),
+      orderIndex: Value(orderIndex),
+      name: Value(name),
+      repeatCount: Value(repeatCount),
+      backgroundColor: Value(backgroundColor),
+    );
+  }
+
+  factory Cycle.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Cycle(
+      id: serializer.fromJson<int>(json['id']),
+      cyclockId: serializer.fromJson<int>(json['cyclockId']),
+      orderIndex: serializer.fromJson<int>(json['orderIndex']),
+      name: serializer.fromJson<String>(json['name']),
+      repeatCount: serializer.fromJson<int>(json['repeatCount']),
+      backgroundColor: serializer.fromJson<String>(json['backgroundColor']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'cyclockId': serializer.toJson<int>(cyclockId),
+      'orderIndex': serializer.toJson<int>(orderIndex),
+      'name': serializer.toJson<String>(name),
+      'repeatCount': serializer.toJson<int>(repeatCount),
+      'backgroundColor': serializer.toJson<String>(backgroundColor),
+    };
+  }
+
+  Cycle copyWith({
+    int? id,
+    int? cyclockId,
+    int? orderIndex,
+    String? name,
+    int? repeatCount,
+    String? backgroundColor,
+  }) => Cycle(
+    id: id ?? this.id,
+    cyclockId: cyclockId ?? this.cyclockId,
+    orderIndex: orderIndex ?? this.orderIndex,
+    name: name ?? this.name,
+    repeatCount: repeatCount ?? this.repeatCount,
+    backgroundColor: backgroundColor ?? this.backgroundColor,
+  );
+  Cycle copyWithCompanion(CyclesCompanion data) {
+    return Cycle(
+      id: data.id.present ? data.id.value : this.id,
+      cyclockId: data.cyclockId.present ? data.cyclockId.value : this.cyclockId,
+      orderIndex: data.orderIndex.present
+          ? data.orderIndex.value
+          : this.orderIndex,
+      name: data.name.present ? data.name.value : this.name,
+      repeatCount: data.repeatCount.present
+          ? data.repeatCount.value
+          : this.repeatCount,
+      backgroundColor: data.backgroundColor.present
+          ? data.backgroundColor.value
+          : this.backgroundColor,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Cycle(')
+          ..write('id: $id, ')
+          ..write('cyclockId: $cyclockId, ')
+          ..write('orderIndex: $orderIndex, ')
+          ..write('name: $name, ')
+          ..write('repeatCount: $repeatCount, ')
+          ..write('backgroundColor: $backgroundColor')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    cyclockId,
+    orderIndex,
+    name,
+    repeatCount,
+    backgroundColor,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Cycle &&
+          other.id == this.id &&
+          other.cyclockId == this.cyclockId &&
+          other.orderIndex == this.orderIndex &&
+          other.name == this.name &&
+          other.repeatCount == this.repeatCount &&
+          other.backgroundColor == this.backgroundColor);
+}
+
+class CyclesCompanion extends UpdateCompanion<Cycle> {
+  final Value<int> id;
+  final Value<int> cyclockId;
+  final Value<int> orderIndex;
+  final Value<String> name;
+  final Value<int> repeatCount;
+  final Value<String> backgroundColor;
+  const CyclesCompanion({
+    this.id = const Value.absent(),
+    this.cyclockId = const Value.absent(),
+    this.orderIndex = const Value.absent(),
+    this.name = const Value.absent(),
+    this.repeatCount = const Value.absent(),
+    this.backgroundColor = const Value.absent(),
+  });
+  CyclesCompanion.insert({
+    this.id = const Value.absent(),
+    required int cyclockId,
+    required int orderIndex,
+    this.name = const Value.absent(),
+    this.repeatCount = const Value.absent(),
+    this.backgroundColor = const Value.absent(),
+  }) : cyclockId = Value(cyclockId),
+       orderIndex = Value(orderIndex);
+  static Insertable<Cycle> custom({
+    Expression<int>? id,
+    Expression<int>? cyclockId,
+    Expression<int>? orderIndex,
+    Expression<String>? name,
+    Expression<int>? repeatCount,
+    Expression<String>? backgroundColor,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (cyclockId != null) 'cyclock_id': cyclockId,
+      if (orderIndex != null) 'order_index': orderIndex,
+      if (name != null) 'name': name,
+      if (repeatCount != null) 'repeat_count': repeatCount,
+      if (backgroundColor != null) 'background_color': backgroundColor,
+    });
+  }
+
+  CyclesCompanion copyWith({
+    Value<int>? id,
+    Value<int>? cyclockId,
+    Value<int>? orderIndex,
+    Value<String>? name,
+    Value<int>? repeatCount,
+    Value<String>? backgroundColor,
+  }) {
+    return CyclesCompanion(
+      id: id ?? this.id,
+      cyclockId: cyclockId ?? this.cyclockId,
+      orderIndex: orderIndex ?? this.orderIndex,
+      name: name ?? this.name,
+      repeatCount: repeatCount ?? this.repeatCount,
+      backgroundColor: backgroundColor ?? this.backgroundColor,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (cyclockId.present) {
+      map['cyclock_id'] = Variable<int>(cyclockId.value);
+    }
+    if (orderIndex.present) {
+      map['order_index'] = Variable<int>(orderIndex.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (repeatCount.present) {
+      map['repeat_count'] = Variable<int>(repeatCount.value);
+    }
+    if (backgroundColor.present) {
+      map['background_color'] = Variable<String>(backgroundColor.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CyclesCompanion(')
+          ..write('id: $id, ')
+          ..write('cyclockId: $cyclockId, ')
+          ..write('orderIndex: $orderIndex, ')
+          ..write('name: $name, ')
+          ..write('repeatCount: $repeatCount, ')
+          ..write('backgroundColor: $backgroundColor')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $TimerStagesTable extends TimerStages
+    with TableInfo<$TimerStagesTable, TimerStage> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TimerStagesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _cycleIdMeta = const VerificationMeta(
+    'cycleId',
+  );
+  @override
+  late final GeneratedColumn<int> cycleId = GeneratedColumn<int>(
+    'cycle_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES cycles (id) ON DELETE CASCADE',
     ),
   );
   static const VerificationMeta _orderIndexMeta = const VerificationMeta(
@@ -510,29 +973,15 @@ class $TimerStagesTable extends TimerStages
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _isFuseMeta = const VerificationMeta('isFuse');
-  @override
-  late final GeneratedColumn<bool> isFuse = GeneratedColumn<bool>(
-    'is_fuse',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("is_fuse" IN (0, 1))',
-    ),
-    defaultValue: const Constant(false),
-  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
-    cyclockId,
+    cycleId,
     orderIndex,
     name,
     durationSeconds,
     color,
     sound,
-    isFuse,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -549,13 +998,13 @@ class $TimerStagesTable extends TimerStages
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     }
-    if (data.containsKey('cyclock_id')) {
+    if (data.containsKey('cycle_id')) {
       context.handle(
-        _cyclockIdMeta,
-        cyclockId.isAcceptableOrUnknown(data['cyclock_id']!, _cyclockIdMeta),
+        _cycleIdMeta,
+        cycleId.isAcceptableOrUnknown(data['cycle_id']!, _cycleIdMeta),
       );
     } else if (isInserting) {
-      context.missing(_cyclockIdMeta);
+      context.missing(_cycleIdMeta);
     }
     if (data.containsKey('order_index')) {
       context.handle(
@@ -600,12 +1049,6 @@ class $TimerStagesTable extends TimerStages
     } else if (isInserting) {
       context.missing(_soundMeta);
     }
-    if (data.containsKey('is_fuse')) {
-      context.handle(
-        _isFuseMeta,
-        isFuse.isAcceptableOrUnknown(data['is_fuse']!, _isFuseMeta),
-      );
-    }
     return context;
   }
 
@@ -619,9 +1062,9 @@ class $TimerStagesTable extends TimerStages
         DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
-      cyclockId: attachedDatabase.typeMapping.read(
+      cycleId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
-        data['${effectivePrefix}cyclock_id'],
+        data['${effectivePrefix}cycle_id'],
       )!,
       orderIndex: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
@@ -643,10 +1086,6 @@ class $TimerStagesTable extends TimerStages
         DriftSqlType.string,
         data['${effectivePrefix}sound'],
       )!,
-      isFuse: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}is_fuse'],
-      )!,
     );
   }
 
@@ -658,47 +1097,43 @@ class $TimerStagesTable extends TimerStages
 
 class TimerStage extends DataClass implements Insertable<TimerStage> {
   final int id;
-  final int cyclockId;
+  final int cycleId;
   final int orderIndex;
   final String name;
   final int durationSeconds;
   final String color;
   final String sound;
-  final bool isFuse;
   const TimerStage({
     required this.id,
-    required this.cyclockId,
+    required this.cycleId,
     required this.orderIndex,
     required this.name,
     required this.durationSeconds,
     required this.color,
     required this.sound,
-    required this.isFuse,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
-    map['cyclock_id'] = Variable<int>(cyclockId);
+    map['cycle_id'] = Variable<int>(cycleId);
     map['order_index'] = Variable<int>(orderIndex);
     map['name'] = Variable<String>(name);
     map['duration_seconds'] = Variable<int>(durationSeconds);
     map['color'] = Variable<String>(color);
     map['sound'] = Variable<String>(sound);
-    map['is_fuse'] = Variable<bool>(isFuse);
     return map;
   }
 
   TimerStagesCompanion toCompanion(bool nullToAbsent) {
     return TimerStagesCompanion(
       id: Value(id),
-      cyclockId: Value(cyclockId),
+      cycleId: Value(cycleId),
       orderIndex: Value(orderIndex),
       name: Value(name),
       durationSeconds: Value(durationSeconds),
       color: Value(color),
       sound: Value(sound),
-      isFuse: Value(isFuse),
     );
   }
 
@@ -709,13 +1144,12 @@ class TimerStage extends DataClass implements Insertable<TimerStage> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return TimerStage(
       id: serializer.fromJson<int>(json['id']),
-      cyclockId: serializer.fromJson<int>(json['cyclockId']),
+      cycleId: serializer.fromJson<int>(json['cycleId']),
       orderIndex: serializer.fromJson<int>(json['orderIndex']),
       name: serializer.fromJson<String>(json['name']),
       durationSeconds: serializer.fromJson<int>(json['durationSeconds']),
       color: serializer.fromJson<String>(json['color']),
       sound: serializer.fromJson<String>(json['sound']),
-      isFuse: serializer.fromJson<bool>(json['isFuse']),
     );
   }
   @override
@@ -723,39 +1157,36 @@ class TimerStage extends DataClass implements Insertable<TimerStage> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
-      'cyclockId': serializer.toJson<int>(cyclockId),
+      'cycleId': serializer.toJson<int>(cycleId),
       'orderIndex': serializer.toJson<int>(orderIndex),
       'name': serializer.toJson<String>(name),
       'durationSeconds': serializer.toJson<int>(durationSeconds),
       'color': serializer.toJson<String>(color),
       'sound': serializer.toJson<String>(sound),
-      'isFuse': serializer.toJson<bool>(isFuse),
     };
   }
 
   TimerStage copyWith({
     int? id,
-    int? cyclockId,
+    int? cycleId,
     int? orderIndex,
     String? name,
     int? durationSeconds,
     String? color,
     String? sound,
-    bool? isFuse,
   }) => TimerStage(
     id: id ?? this.id,
-    cyclockId: cyclockId ?? this.cyclockId,
+    cycleId: cycleId ?? this.cycleId,
     orderIndex: orderIndex ?? this.orderIndex,
     name: name ?? this.name,
     durationSeconds: durationSeconds ?? this.durationSeconds,
     color: color ?? this.color,
     sound: sound ?? this.sound,
-    isFuse: isFuse ?? this.isFuse,
   );
   TimerStage copyWithCompanion(TimerStagesCompanion data) {
     return TimerStage(
       id: data.id.present ? data.id.value : this.id,
-      cyclockId: data.cyclockId.present ? data.cyclockId.value : this.cyclockId,
+      cycleId: data.cycleId.present ? data.cycleId.value : this.cycleId,
       orderIndex: data.orderIndex.present
           ? data.orderIndex.value
           : this.orderIndex,
@@ -765,7 +1196,6 @@ class TimerStage extends DataClass implements Insertable<TimerStage> {
           : this.durationSeconds,
       color: data.color.present ? data.color.value : this.color,
       sound: data.sound.present ? data.sound.value : this.sound,
-      isFuse: data.isFuse.present ? data.isFuse.value : this.isFuse,
     );
   }
 
@@ -773,71 +1203,58 @@ class TimerStage extends DataClass implements Insertable<TimerStage> {
   String toString() {
     return (StringBuffer('TimerStage(')
           ..write('id: $id, ')
-          ..write('cyclockId: $cyclockId, ')
+          ..write('cycleId: $cycleId, ')
           ..write('orderIndex: $orderIndex, ')
           ..write('name: $name, ')
           ..write('durationSeconds: $durationSeconds, ')
           ..write('color: $color, ')
-          ..write('sound: $sound, ')
-          ..write('isFuse: $isFuse')
+          ..write('sound: $sound')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
-    id,
-    cyclockId,
-    orderIndex,
-    name,
-    durationSeconds,
-    color,
-    sound,
-    isFuse,
-  );
+  int get hashCode =>
+      Object.hash(id, cycleId, orderIndex, name, durationSeconds, color, sound);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is TimerStage &&
           other.id == this.id &&
-          other.cyclockId == this.cyclockId &&
+          other.cycleId == this.cycleId &&
           other.orderIndex == this.orderIndex &&
           other.name == this.name &&
           other.durationSeconds == this.durationSeconds &&
           other.color == this.color &&
-          other.sound == this.sound &&
-          other.isFuse == this.isFuse);
+          other.sound == this.sound);
 }
 
 class TimerStagesCompanion extends UpdateCompanion<TimerStage> {
   final Value<int> id;
-  final Value<int> cyclockId;
+  final Value<int> cycleId;
   final Value<int> orderIndex;
   final Value<String> name;
   final Value<int> durationSeconds;
   final Value<String> color;
   final Value<String> sound;
-  final Value<bool> isFuse;
   const TimerStagesCompanion({
     this.id = const Value.absent(),
-    this.cyclockId = const Value.absent(),
+    this.cycleId = const Value.absent(),
     this.orderIndex = const Value.absent(),
     this.name = const Value.absent(),
     this.durationSeconds = const Value.absent(),
     this.color = const Value.absent(),
     this.sound = const Value.absent(),
-    this.isFuse = const Value.absent(),
   });
   TimerStagesCompanion.insert({
     this.id = const Value.absent(),
-    required int cyclockId,
+    required int cycleId,
     required int orderIndex,
     required String name,
     required int durationSeconds,
     required String color,
     required String sound,
-    this.isFuse = const Value.absent(),
-  }) : cyclockId = Value(cyclockId),
+  }) : cycleId = Value(cycleId),
        orderIndex = Value(orderIndex),
        name = Value(name),
        durationSeconds = Value(durationSeconds),
@@ -845,45 +1262,41 @@ class TimerStagesCompanion extends UpdateCompanion<TimerStage> {
        sound = Value(sound);
   static Insertable<TimerStage> custom({
     Expression<int>? id,
-    Expression<int>? cyclockId,
+    Expression<int>? cycleId,
     Expression<int>? orderIndex,
     Expression<String>? name,
     Expression<int>? durationSeconds,
     Expression<String>? color,
     Expression<String>? sound,
-    Expression<bool>? isFuse,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
-      if (cyclockId != null) 'cyclock_id': cyclockId,
+      if (cycleId != null) 'cycle_id': cycleId,
       if (orderIndex != null) 'order_index': orderIndex,
       if (name != null) 'name': name,
       if (durationSeconds != null) 'duration_seconds': durationSeconds,
       if (color != null) 'color': color,
       if (sound != null) 'sound': sound,
-      if (isFuse != null) 'is_fuse': isFuse,
     });
   }
 
   TimerStagesCompanion copyWith({
     Value<int>? id,
-    Value<int>? cyclockId,
+    Value<int>? cycleId,
     Value<int>? orderIndex,
     Value<String>? name,
     Value<int>? durationSeconds,
     Value<String>? color,
     Value<String>? sound,
-    Value<bool>? isFuse,
   }) {
     return TimerStagesCompanion(
       id: id ?? this.id,
-      cyclockId: cyclockId ?? this.cyclockId,
+      cycleId: cycleId ?? this.cycleId,
       orderIndex: orderIndex ?? this.orderIndex,
       name: name ?? this.name,
       durationSeconds: durationSeconds ?? this.durationSeconds,
       color: color ?? this.color,
       sound: sound ?? this.sound,
-      isFuse: isFuse ?? this.isFuse,
     );
   }
 
@@ -893,8 +1306,8 @@ class TimerStagesCompanion extends UpdateCompanion<TimerStage> {
     if (id.present) {
       map['id'] = Variable<int>(id.value);
     }
-    if (cyclockId.present) {
-      map['cyclock_id'] = Variable<int>(cyclockId.value);
+    if (cycleId.present) {
+      map['cycle_id'] = Variable<int>(cycleId.value);
     }
     if (orderIndex.present) {
       map['order_index'] = Variable<int>(orderIndex.value);
@@ -911,9 +1324,6 @@ class TimerStagesCompanion extends UpdateCompanion<TimerStage> {
     if (sound.present) {
       map['sound'] = Variable<String>(sound.value);
     }
-    if (isFuse.present) {
-      map['is_fuse'] = Variable<bool>(isFuse.value);
-    }
     return map;
   }
 
@@ -921,13 +1331,12 @@ class TimerStagesCompanion extends UpdateCompanion<TimerStage> {
   String toString() {
     return (StringBuffer('TimerStagesCompanion(')
           ..write('id: $id, ')
-          ..write('cyclockId: $cyclockId, ')
+          ..write('cycleId: $cycleId, ')
           ..write('orderIndex: $orderIndex, ')
           ..write('name: $name, ')
           ..write('durationSeconds: $durationSeconds, ')
           ..write('color: $color, ')
-          ..write('sound: $sound, ')
-          ..write('isFuse: $isFuse')
+          ..write('sound: $sound')
           ..write(')'))
         .toString();
   }
@@ -937,6 +1346,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $CyclocksTable cyclocks = $CyclocksTable(this);
+  late final $CyclesTable cycles = $CyclesTable(this);
   late final $TimerStagesTable timerStages = $TimerStagesTable(this);
   late final CyclocksDao cyclocksDao = CyclocksDao(this as AppDatabase);
   late final TimerStagesDao timerStagesDao = TimerStagesDao(
@@ -946,45 +1356,69 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [cyclocks, timerStages];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+    cyclocks,
+    cycles,
+    timerStages,
+  ];
+  @override
+  StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'cyclocks',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('cycles', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'cycles',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('timer_stages', kind: UpdateKind.delete)],
+    ),
+  ]);
 }
 
 typedef $$CyclocksTableCreateCompanionBuilder =
     CyclocksCompanion Function({
       Value<int> id,
       required String name,
-      Value<bool> isDefault,
-      Value<int> repeatCount,
-      Value<bool> repeatIndefinitely,
       required String colorPalette,
+      Value<bool> repeatIndefinitely,
+      Value<bool> hasFuse,
+      Value<int> fuseDuration,
+      Value<String> fuseSound,
     });
 typedef $$CyclocksTableUpdateCompanionBuilder =
     CyclocksCompanion Function({
       Value<int> id,
       Value<String> name,
-      Value<bool> isDefault,
-      Value<int> repeatCount,
-      Value<bool> repeatIndefinitely,
       Value<String> colorPalette,
+      Value<bool> repeatIndefinitely,
+      Value<bool> hasFuse,
+      Value<int> fuseDuration,
+      Value<String> fuseSound,
     });
 
 final class $$CyclocksTableReferences
     extends BaseReferences<_$AppDatabase, $CyclocksTable, Cyclock> {
   $$CyclocksTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static MultiTypedResultKey<$TimerStagesTable, List<TimerStage>>
-  _timerStagesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
-    db.timerStages,
-    aliasName: $_aliasNameGenerator(db.cyclocks.id, db.timerStages.cyclockId),
+  static MultiTypedResultKey<$CyclesTable, List<Cycle>> _cyclesRefsTable(
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.cycles,
+    aliasName: $_aliasNameGenerator(db.cyclocks.id, db.cycles.cyclockId),
   );
 
-  $$TimerStagesTableProcessedTableManager get timerStagesRefs {
-    final manager = $$TimerStagesTableTableManager(
+  $$CyclesTableProcessedTableManager get cyclesRefs {
+    final manager = $$CyclesTableTableManager(
       $_db,
-      $_db.timerStages,
+      $_db.cycles,
     ).filter((f) => f.cyclockId.id.sqlEquals($_itemColumn<int>('id')!));
 
-    final cache = $_typedResult.readTableOrNull(_timerStagesRefsTable($_db));
+    final cache = $_typedResult.readTableOrNull(_cyclesRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -1010,13 +1444,8 @@ class $$CyclocksTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<bool> get isDefault => $composableBuilder(
-    column: $table.isDefault,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get repeatCount => $composableBuilder(
-    column: $table.repeatCount,
+  ColumnFilters<String> get colorPalette => $composableBuilder(
+    column: $table.colorPalette,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1025,27 +1454,37 @@ class $$CyclocksTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get colorPalette => $composableBuilder(
-    column: $table.colorPalette,
+  ColumnFilters<bool> get hasFuse => $composableBuilder(
+    column: $table.hasFuse,
     builder: (column) => ColumnFilters(column),
   );
 
-  Expression<bool> timerStagesRefs(
-    Expression<bool> Function($$TimerStagesTableFilterComposer f) f,
+  ColumnFilters<int> get fuseDuration => $composableBuilder(
+    column: $table.fuseDuration,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fuseSound => $composableBuilder(
+    column: $table.fuseSound,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> cyclesRefs(
+    Expression<bool> Function($$CyclesTableFilterComposer f) f,
   ) {
-    final $$TimerStagesTableFilterComposer composer = $composerBuilder(
+    final $$CyclesTableFilterComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.id,
-      referencedTable: $db.timerStages,
+      referencedTable: $db.cycles,
       getReferencedColumn: (t) => t.cyclockId,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$TimerStagesTableFilterComposer(
+          }) => $$CyclesTableFilterComposer(
             $db: $db,
-            $table: $db.timerStages,
+            $table: $db.cycles,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -1075,13 +1514,8 @@ class $$CyclocksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<bool> get isDefault => $composableBuilder(
-    column: $table.isDefault,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get repeatCount => $composableBuilder(
-    column: $table.repeatCount,
+  ColumnOrderings<String> get colorPalette => $composableBuilder(
+    column: $table.colorPalette,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -1090,8 +1524,18 @@ class $$CyclocksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get colorPalette => $composableBuilder(
-    column: $table.colorPalette,
+  ColumnOrderings<bool> get hasFuse => $composableBuilder(
+    column: $table.hasFuse,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get fuseDuration => $composableBuilder(
+    column: $table.fuseDuration,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fuseSound => $composableBuilder(
+    column: $table.fuseSound,
     builder: (column) => ColumnOrderings(column),
   );
 }
@@ -1111,11 +1555,8 @@ class $$CyclocksTableAnnotationComposer
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
 
-  GeneratedColumn<bool> get isDefault =>
-      $composableBuilder(column: $table.isDefault, builder: (column) => column);
-
-  GeneratedColumn<int> get repeatCount => $composableBuilder(
-    column: $table.repeatCount,
+  GeneratedColumn<String> get colorPalette => $composableBuilder(
+    column: $table.colorPalette,
     builder: (column) => column,
   );
 
@@ -1124,27 +1565,33 @@ class $$CyclocksTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<String> get colorPalette => $composableBuilder(
-    column: $table.colorPalette,
+  GeneratedColumn<bool> get hasFuse =>
+      $composableBuilder(column: $table.hasFuse, builder: (column) => column);
+
+  GeneratedColumn<int> get fuseDuration => $composableBuilder(
+    column: $table.fuseDuration,
     builder: (column) => column,
   );
 
-  Expression<T> timerStagesRefs<T extends Object>(
-    Expression<T> Function($$TimerStagesTableAnnotationComposer a) f,
+  GeneratedColumn<String> get fuseSound =>
+      $composableBuilder(column: $table.fuseSound, builder: (column) => column);
+
+  Expression<T> cyclesRefs<T extends Object>(
+    Expression<T> Function($$CyclesTableAnnotationComposer a) f,
   ) {
-    final $$TimerStagesTableAnnotationComposer composer = $composerBuilder(
+    final $$CyclesTableAnnotationComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.id,
-      referencedTable: $db.timerStages,
+      referencedTable: $db.cycles,
       getReferencedColumn: (t) => t.cyclockId,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$TimerStagesTableAnnotationComposer(
+          }) => $$CyclesTableAnnotationComposer(
             $db: $db,
-            $table: $db.timerStages,
+            $table: $db.cycles,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -1168,7 +1615,7 @@ class $$CyclocksTableTableManager
           $$CyclocksTableUpdateCompanionBuilder,
           (Cyclock, $$CyclocksTableReferences),
           Cyclock,
-          PrefetchHooks Function({bool timerStagesRefs})
+          PrefetchHooks Function({bool cyclesRefs})
         > {
   $$CyclocksTableTableManager(_$AppDatabase db, $CyclocksTable table)
     : super(
@@ -1185,33 +1632,37 @@ class $$CyclocksTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
-                Value<bool> isDefault = const Value.absent(),
-                Value<int> repeatCount = const Value.absent(),
-                Value<bool> repeatIndefinitely = const Value.absent(),
                 Value<String> colorPalette = const Value.absent(),
+                Value<bool> repeatIndefinitely = const Value.absent(),
+                Value<bool> hasFuse = const Value.absent(),
+                Value<int> fuseDuration = const Value.absent(),
+                Value<String> fuseSound = const Value.absent(),
               }) => CyclocksCompanion(
                 id: id,
                 name: name,
-                isDefault: isDefault,
-                repeatCount: repeatCount,
-                repeatIndefinitely: repeatIndefinitely,
                 colorPalette: colorPalette,
+                repeatIndefinitely: repeatIndefinitely,
+                hasFuse: hasFuse,
+                fuseDuration: fuseDuration,
+                fuseSound: fuseSound,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 required String name,
-                Value<bool> isDefault = const Value.absent(),
-                Value<int> repeatCount = const Value.absent(),
-                Value<bool> repeatIndefinitely = const Value.absent(),
                 required String colorPalette,
+                Value<bool> repeatIndefinitely = const Value.absent(),
+                Value<bool> hasFuse = const Value.absent(),
+                Value<int> fuseDuration = const Value.absent(),
+                Value<String> fuseSound = const Value.absent(),
               }) => CyclocksCompanion.insert(
                 id: id,
                 name: name,
-                isDefault: isDefault,
-                repeatCount: repeatCount,
-                repeatIndefinitely: repeatIndefinitely,
                 colorPalette: colorPalette,
+                repeatIndefinitely: repeatIndefinitely,
+                hasFuse: hasFuse,
+                fuseDuration: fuseDuration,
+                fuseSound: fuseSound,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -1221,27 +1672,20 @@ class $$CyclocksTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({timerStagesRefs = false}) {
+          prefetchHooksCallback: ({cyclesRefs = false}) {
             return PrefetchHooks(
               db: db,
-              explicitlyWatchedTables: [if (timerStagesRefs) db.timerStages],
+              explicitlyWatchedTables: [if (cyclesRefs) db.cycles],
               addJoins: null,
               getPrefetchedDataCallback: (items) async {
                 return [
-                  if (timerStagesRefs)
-                    await $_getPrefetchedData<
-                      Cyclock,
-                      $CyclocksTable,
-                      TimerStage
-                    >(
+                  if (cyclesRefs)
+                    await $_getPrefetchedData<Cyclock, $CyclocksTable, Cycle>(
                       currentTable: table,
                       referencedTable: $$CyclocksTableReferences
-                          ._timerStagesRefsTable(db),
-                      managerFromTypedResult: (p0) => $$CyclocksTableReferences(
-                        db,
-                        table,
-                        p0,
-                      ).timerStagesRefs,
+                          ._cyclesRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$CyclocksTableReferences(db, table, p0).cyclesRefs,
                       referencedItemsForCurrentItem: (item, referencedItems) =>
                           referencedItems.where((e) => e.cyclockId == item.id),
                       typedResults: items,
@@ -1266,39 +1710,33 @@ typedef $$CyclocksTableProcessedTableManager =
       $$CyclocksTableUpdateCompanionBuilder,
       (Cyclock, $$CyclocksTableReferences),
       Cyclock,
-      PrefetchHooks Function({bool timerStagesRefs})
+      PrefetchHooks Function({bool cyclesRefs})
     >;
-typedef $$TimerStagesTableCreateCompanionBuilder =
-    TimerStagesCompanion Function({
+typedef $$CyclesTableCreateCompanionBuilder =
+    CyclesCompanion Function({
       Value<int> id,
       required int cyclockId,
       required int orderIndex,
-      required String name,
-      required int durationSeconds,
-      required String color,
-      required String sound,
-      Value<bool> isFuse,
+      Value<String> name,
+      Value<int> repeatCount,
+      Value<String> backgroundColor,
     });
-typedef $$TimerStagesTableUpdateCompanionBuilder =
-    TimerStagesCompanion Function({
+typedef $$CyclesTableUpdateCompanionBuilder =
+    CyclesCompanion Function({
       Value<int> id,
       Value<int> cyclockId,
       Value<int> orderIndex,
       Value<String> name,
-      Value<int> durationSeconds,
-      Value<String> color,
-      Value<String> sound,
-      Value<bool> isFuse,
+      Value<int> repeatCount,
+      Value<String> backgroundColor,
     });
 
-final class $$TimerStagesTableReferences
-    extends BaseReferences<_$AppDatabase, $TimerStagesTable, TimerStage> {
-  $$TimerStagesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+final class $$CyclesTableReferences
+    extends BaseReferences<_$AppDatabase, $CyclesTable, Cycle> {
+  $$CyclesTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static $CyclocksTable _cyclockIdTable(_$AppDatabase db) =>
-      db.cyclocks.createAlias(
-        $_aliasNameGenerator(db.timerStages.cyclockId, db.cyclocks.id),
-      );
+  static $CyclocksTable _cyclockIdTable(_$AppDatabase db) => db.cyclocks
+      .createAlias($_aliasNameGenerator(db.cycles.cyclockId, db.cyclocks.id));
 
   $$CyclocksTableProcessedTableManager get cyclockId {
     final $_column = $_itemColumn<int>('cyclock_id')!;
@@ -1308,6 +1746,436 @@ final class $$TimerStagesTableReferences
       $_db.cyclocks,
     ).filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_cyclockIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static MultiTypedResultKey<$TimerStagesTable, List<TimerStage>>
+  _timerStagesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.timerStages,
+    aliasName: $_aliasNameGenerator(db.cycles.id, db.timerStages.cycleId),
+  );
+
+  $$TimerStagesTableProcessedTableManager get timerStagesRefs {
+    final manager = $$TimerStagesTableTableManager(
+      $_db,
+      $_db.timerStages,
+    ).filter((f) => f.cycleId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_timerStagesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$CyclesTableFilterComposer
+    extends Composer<_$AppDatabase, $CyclesTable> {
+  $$CyclesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get orderIndex => $composableBuilder(
+    column: $table.orderIndex,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get repeatCount => $composableBuilder(
+    column: $table.repeatCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get backgroundColor => $composableBuilder(
+    column: $table.backgroundColor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$CyclocksTableFilterComposer get cyclockId {
+    final $$CyclocksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.cyclockId,
+      referencedTable: $db.cyclocks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CyclocksTableFilterComposer(
+            $db: $db,
+            $table: $db.cyclocks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<bool> timerStagesRefs(
+    Expression<bool> Function($$TimerStagesTableFilterComposer f) f,
+  ) {
+    final $$TimerStagesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.timerStages,
+      getReferencedColumn: (t) => t.cycleId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TimerStagesTableFilterComposer(
+            $db: $db,
+            $table: $db.timerStages,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$CyclesTableOrderingComposer
+    extends Composer<_$AppDatabase, $CyclesTable> {
+  $$CyclesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get orderIndex => $composableBuilder(
+    column: $table.orderIndex,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get repeatCount => $composableBuilder(
+    column: $table.repeatCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get backgroundColor => $composableBuilder(
+    column: $table.backgroundColor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$CyclocksTableOrderingComposer get cyclockId {
+    final $$CyclocksTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.cyclockId,
+      referencedTable: $db.cyclocks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CyclocksTableOrderingComposer(
+            $db: $db,
+            $table: $db.cyclocks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$CyclesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CyclesTable> {
+  $$CyclesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get orderIndex => $composableBuilder(
+    column: $table.orderIndex,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<int> get repeatCount => $composableBuilder(
+    column: $table.repeatCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get backgroundColor => $composableBuilder(
+    column: $table.backgroundColor,
+    builder: (column) => column,
+  );
+
+  $$CyclocksTableAnnotationComposer get cyclockId {
+    final $$CyclocksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.cyclockId,
+      referencedTable: $db.cyclocks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CyclocksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.cyclocks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<T> timerStagesRefs<T extends Object>(
+    Expression<T> Function($$TimerStagesTableAnnotationComposer a) f,
+  ) {
+    final $$TimerStagesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.timerStages,
+      getReferencedColumn: (t) => t.cycleId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TimerStagesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.timerStages,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$CyclesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CyclesTable,
+          Cycle,
+          $$CyclesTableFilterComposer,
+          $$CyclesTableOrderingComposer,
+          $$CyclesTableAnnotationComposer,
+          $$CyclesTableCreateCompanionBuilder,
+          $$CyclesTableUpdateCompanionBuilder,
+          (Cycle, $$CyclesTableReferences),
+          Cycle,
+          PrefetchHooks Function({bool cyclockId, bool timerStagesRefs})
+        > {
+  $$CyclesTableTableManager(_$AppDatabase db, $CyclesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CyclesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CyclesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CyclesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> cyclockId = const Value.absent(),
+                Value<int> orderIndex = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<int> repeatCount = const Value.absent(),
+                Value<String> backgroundColor = const Value.absent(),
+              }) => CyclesCompanion(
+                id: id,
+                cyclockId: cyclockId,
+                orderIndex: orderIndex,
+                name: name,
+                repeatCount: repeatCount,
+                backgroundColor: backgroundColor,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int cyclockId,
+                required int orderIndex,
+                Value<String> name = const Value.absent(),
+                Value<int> repeatCount = const Value.absent(),
+                Value<String> backgroundColor = const Value.absent(),
+              }) => CyclesCompanion.insert(
+                id: id,
+                cyclockId: cyclockId,
+                orderIndex: orderIndex,
+                name: name,
+                repeatCount: repeatCount,
+                backgroundColor: backgroundColor,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) =>
+                    (e.readTable(table), $$CyclesTableReferences(db, table, e)),
+              )
+              .toList(),
+          prefetchHooksCallback:
+              ({cyclockId = false, timerStagesRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (timerStagesRefs) db.timerStages,
+                  ],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (cyclockId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.cyclockId,
+                                    referencedTable: $$CyclesTableReferences
+                                        ._cyclockIdTable(db),
+                                    referencedColumn: $$CyclesTableReferences
+                                        ._cyclockIdTable(db)
+                                        .id,
+                                  )
+                                  as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (timerStagesRefs)
+                        await $_getPrefetchedData<
+                          Cycle,
+                          $CyclesTable,
+                          TimerStage
+                        >(
+                          currentTable: table,
+                          referencedTable: $$CyclesTableReferences
+                              ._timerStagesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$CyclesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).timerStagesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.cycleId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$CyclesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CyclesTable,
+      Cycle,
+      $$CyclesTableFilterComposer,
+      $$CyclesTableOrderingComposer,
+      $$CyclesTableAnnotationComposer,
+      $$CyclesTableCreateCompanionBuilder,
+      $$CyclesTableUpdateCompanionBuilder,
+      (Cycle, $$CyclesTableReferences),
+      Cycle,
+      PrefetchHooks Function({bool cyclockId, bool timerStagesRefs})
+    >;
+typedef $$TimerStagesTableCreateCompanionBuilder =
+    TimerStagesCompanion Function({
+      Value<int> id,
+      required int cycleId,
+      required int orderIndex,
+      required String name,
+      required int durationSeconds,
+      required String color,
+      required String sound,
+    });
+typedef $$TimerStagesTableUpdateCompanionBuilder =
+    TimerStagesCompanion Function({
+      Value<int> id,
+      Value<int> cycleId,
+      Value<int> orderIndex,
+      Value<String> name,
+      Value<int> durationSeconds,
+      Value<String> color,
+      Value<String> sound,
+    });
+
+final class $$TimerStagesTableReferences
+    extends BaseReferences<_$AppDatabase, $TimerStagesTable, TimerStage> {
+  $$TimerStagesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $CyclesTable _cycleIdTable(_$AppDatabase db) => db.cycles.createAlias(
+    $_aliasNameGenerator(db.timerStages.cycleId, db.cycles.id),
+  );
+
+  $$CyclesTableProcessedTableManager get cycleId {
+    final $_column = $_itemColumn<int>('cycle_id')!;
+
+    final manager = $$CyclesTableTableManager(
+      $_db,
+      $_db.cycles,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_cycleIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
@@ -1354,25 +2222,20 @@ class $$TimerStagesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<bool> get isFuse => $composableBuilder(
-    column: $table.isFuse,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  $$CyclocksTableFilterComposer get cyclockId {
-    final $$CyclocksTableFilterComposer composer = $composerBuilder(
+  $$CyclesTableFilterComposer get cycleId {
+    final $$CyclesTableFilterComposer composer = $composerBuilder(
       composer: this,
-      getCurrentColumn: (t) => t.cyclockId,
-      referencedTable: $db.cyclocks,
+      getCurrentColumn: (t) => t.cycleId,
+      referencedTable: $db.cycles,
       getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$CyclocksTableFilterComposer(
+          }) => $$CyclesTableFilterComposer(
             $db: $db,
-            $table: $db.cyclocks,
+            $table: $db.cycles,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -1422,25 +2285,20 @@ class $$TimerStagesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<bool> get isFuse => $composableBuilder(
-    column: $table.isFuse,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  $$CyclocksTableOrderingComposer get cyclockId {
-    final $$CyclocksTableOrderingComposer composer = $composerBuilder(
+  $$CyclesTableOrderingComposer get cycleId {
+    final $$CyclesTableOrderingComposer composer = $composerBuilder(
       composer: this,
-      getCurrentColumn: (t) => t.cyclockId,
-      referencedTable: $db.cyclocks,
+      getCurrentColumn: (t) => t.cycleId,
+      referencedTable: $db.cycles,
       getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$CyclocksTableOrderingComposer(
+          }) => $$CyclesTableOrderingComposer(
             $db: $db,
-            $table: $db.cyclocks,
+            $table: $db.cycles,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -1482,23 +2340,20 @@ class $$TimerStagesTableAnnotationComposer
   GeneratedColumn<String> get sound =>
       $composableBuilder(column: $table.sound, builder: (column) => column);
 
-  GeneratedColumn<bool> get isFuse =>
-      $composableBuilder(column: $table.isFuse, builder: (column) => column);
-
-  $$CyclocksTableAnnotationComposer get cyclockId {
-    final $$CyclocksTableAnnotationComposer composer = $composerBuilder(
+  $$CyclesTableAnnotationComposer get cycleId {
+    final $$CyclesTableAnnotationComposer composer = $composerBuilder(
       composer: this,
-      getCurrentColumn: (t) => t.cyclockId,
-      referencedTable: $db.cyclocks,
+      getCurrentColumn: (t) => t.cycleId,
+      referencedTable: $db.cycles,
       getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$CyclocksTableAnnotationComposer(
+          }) => $$CyclesTableAnnotationComposer(
             $db: $db,
-            $table: $db.cyclocks,
+            $table: $db.cycles,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -1522,7 +2377,7 @@ class $$TimerStagesTableTableManager
           $$TimerStagesTableUpdateCompanionBuilder,
           (TimerStage, $$TimerStagesTableReferences),
           TimerStage,
-          PrefetchHooks Function({bool cyclockId})
+          PrefetchHooks Function({bool cycleId})
         > {
   $$TimerStagesTableTableManager(_$AppDatabase db, $TimerStagesTable table)
     : super(
@@ -1538,42 +2393,38 @@ class $$TimerStagesTableTableManager
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
-                Value<int> cyclockId = const Value.absent(),
+                Value<int> cycleId = const Value.absent(),
                 Value<int> orderIndex = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<int> durationSeconds = const Value.absent(),
                 Value<String> color = const Value.absent(),
                 Value<String> sound = const Value.absent(),
-                Value<bool> isFuse = const Value.absent(),
               }) => TimerStagesCompanion(
                 id: id,
-                cyclockId: cyclockId,
+                cycleId: cycleId,
                 orderIndex: orderIndex,
                 name: name,
                 durationSeconds: durationSeconds,
                 color: color,
                 sound: sound,
-                isFuse: isFuse,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
-                required int cyclockId,
+                required int cycleId,
                 required int orderIndex,
                 required String name,
                 required int durationSeconds,
                 required String color,
                 required String sound,
-                Value<bool> isFuse = const Value.absent(),
               }) => TimerStagesCompanion.insert(
                 id: id,
-                cyclockId: cyclockId,
+                cycleId: cycleId,
                 orderIndex: orderIndex,
                 name: name,
                 durationSeconds: durationSeconds,
                 color: color,
                 sound: sound,
-                isFuse: isFuse,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -1583,7 +2434,7 @@ class $$TimerStagesTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({cyclockId = false}) {
+          prefetchHooksCallback: ({cycleId = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [],
@@ -1603,15 +2454,15 @@ class $$TimerStagesTableTableManager
                       dynamic
                     >
                   >(state) {
-                    if (cyclockId) {
+                    if (cycleId) {
                       state =
                           state.withJoin(
                                 currentTable: table,
-                                currentColumn: table.cyclockId,
+                                currentColumn: table.cycleId,
                                 referencedTable: $$TimerStagesTableReferences
-                                    ._cyclockIdTable(db),
+                                    ._cycleIdTable(db),
                                 referencedColumn: $$TimerStagesTableReferences
-                                    ._cyclockIdTable(db)
+                                    ._cycleIdTable(db)
                                     .id,
                               )
                               as T;
@@ -1640,7 +2491,7 @@ typedef $$TimerStagesTableProcessedTableManager =
       $$TimerStagesTableUpdateCompanionBuilder,
       (TimerStage, $$TimerStagesTableReferences),
       TimerStage,
-      PrefetchHooks Function({bool cyclockId})
+      PrefetchHooks Function({bool cycleId})
     >;
 
 class $AppDatabaseManager {
@@ -1648,6 +2499,8 @@ class $AppDatabaseManager {
   $AppDatabaseManager(this._db);
   $$CyclocksTableTableManager get cyclocks =>
       $$CyclocksTableTableManager(_db, _db.cyclocks);
+  $$CyclesTableTableManager get cycles =>
+      $$CyclesTableTableManager(_db, _db.cycles);
   $$TimerStagesTableTableManager get timerStages =>
       $$TimerStagesTableTableManager(_db, _db.timerStages);
 }
