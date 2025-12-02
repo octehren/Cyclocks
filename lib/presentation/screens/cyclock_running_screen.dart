@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:circular_countdown_timer/circular_countdown_timer.dart';
+import 'package:liquid_progress_indicator_v2/liquid_progress_indicator.dart';
 import 'package:cyclock/data/database.dart';
 import 'package:cyclock/helpers/timer_engine.dart';
 
@@ -24,10 +24,10 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
 
   int _currentStageIndex = 0;
   int _remainingSeconds = 0;
+  double _totalStageDuration = 1.0; // To calculate percentage
+  
   bool _isRunning = false;
   int _currentCycle = 0;
-  
-  final CountDownController _countDownController = CountDownController();
   
   @override
   void initState() {
@@ -39,26 +39,24 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
     List<TimerStage> flattenedQueue = [];
     List<Color> flattenedColors = [];
 
-    // 1. Add Fuse if enabled
+    // 1. Add Fuse
     if (widget.cyclock.hasFuse) {
-      // Create a temporary stage for the fuse. ID -1 indicates it's not in DB.
       flattenedQueue.add(TimerStage(
         id: -1, 
         cycleId: -1,
         orderIndex: -1,
         name: 'Fuse',
         durationSeconds: widget.cyclock.fuseDuration,
-        color: 'red', // Fuse is typically red
+        color: 'red', 
         sound: widget.cyclock.fuseSound,
       ));
-      // Fuse uses the Cyclock's primary color or just neutral for background
       flattenedColors.add(Colors.black87); 
     }
 
-    // 2. Fetch Cycles from DB
+    // 2. Fetch Cycles
     final dbCycles = await widget.database.cyclesDao.getCyclesForCyclock(widget.cyclock.id);
     
-    // 3. Flatten Logic
+    // 3. Flatten
     for (var cycle in dbCycles) {
       final cycleStages = await widget.database.timerStagesDao.getStagesForCycle(cycle.id);
       final cycleColor = _getStageColor(cycle.backgroundColor);
@@ -71,11 +69,10 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
       }
     }
     
-    // 4. Init Engine
     _timerEngine = TimerEngine();
     _timerEngine.initialize(
       flattenedQueue, 
-      1, // Engine treats queue as one giant cycle
+      1, 
       repeatIndefinitely: widget.cyclock.repeatIndefinitely,
     );
     
@@ -84,6 +81,12 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
         setState(() {
           _currentStageIndex = stageIndex % flattenedQueue.length;
           _remainingSeconds = remainingSeconds;
+          
+          // Update total duration ref for percentage calculation
+          if (stageIndex < flattenedQueue.length) {
+            _totalStageDuration = flattenedQueue[stageIndex].durationSeconds.toDouble();
+            if (_totalStageDuration == 0) _totalStageDuration = 1;
+          }
         });
       }
     };
@@ -105,6 +108,7 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
         _executionQueueColors = flattenedColors;
         if (_executionQueue.isNotEmpty) {
           _remainingSeconds = _executionQueue.first.durationSeconds;
+          _totalStageDuration = _executionQueue.first.durationSeconds.toDouble();
         }
       });
     }
@@ -113,29 +117,29 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
   void _startTimer() {
     setState(() => _isRunning = true);
     _timerEngine.start();
-    _countDownController.start();
   }
   
   void _pauseTimer() {
     setState(() => _isRunning = false);
     _timerEngine.pause();
-    _countDownController.pause();
   }
   
   void _resumeTimer() {
     setState(() => _isRunning = true);
     _timerEngine.resume();
-    _countDownController.resume();
   }
   
   void _stopTimer() {
     setState(() {
       _isRunning = false;
       _currentStageIndex = 0;
+      if (_executionQueue.isNotEmpty) {
+        _remainingSeconds = _executionQueue[0].durationSeconds;
+        _totalStageDuration = _executionQueue[0].durationSeconds.toDouble();
+      }
     });
+    // BUG FIX: Don't mess with controller restart/stop if logic engine handles it
     _timerEngine.stop();
-    _countDownController.restart();
-    _countDownController.pause();
   }
   
   Color _getStageColor(String colorString) {
@@ -152,6 +156,12 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
       case 'darkblue': return Colors.blue[900]!;
       default: return Colors.blue;
     }
+  }
+
+  Color _getContrastingColor(Color background) {
+    return ThemeData.estimateBrightnessForColor(background) == Brightness.dark 
+        ? Colors.white 
+        : Colors.black;
   }
   
   String _formatTime(int seconds) {
@@ -174,68 +184,80 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
     
     final currentStage = _executionQueue[_currentStageIndex];
     final currentCycleColor = _executionQueueColors[_currentStageIndex];
+    final timerColor = _getStageColor(currentStage.color);
     
+    // Calculate percentage for liquid fill (0.0 to 1.0)
+    // Liquid fills from bottom, so we want (Current / Total)
+    double percent = (_remainingSeconds / _totalStageDuration).clamp(0.0, 1.0);
+
     return Scaffold(
-      backgroundColor: currentCycleColor.withOpacity(0.05),
+      backgroundColor: currentCycleColor.withOpacity(0.1),
       appBar: AppBar(
         title: Text(widget.cyclock.name),
         backgroundColor: currentCycleColor,
-        foregroundColor: Colors.white,
+        // Ensure contrast on AppBar
+        foregroundColor: _getContrastingColor(currentCycleColor),
       ),
       body: Column(
         children: [
-          // Header Info
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.white.withOpacity(0.8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      currentStage.name,
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      'Step ${_currentStageIndex + 1} of ${_executionQueue.length}',
-                      style: TextStyle(color: Colors.grey[800]),
-                    ),
-                  ],
+                // 1. Liquid Timer
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.7,
+                  height: MediaQuery.of(context).size.width * 0.7,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Liquid Effect
+                      LiquidCircularProgressIndicator(
+                        value: percent, 
+                        valueColor: AlwaysStoppedAnimation(timerColor),
+                        backgroundColor: Colors.grey[300]!, 
+                        borderColor: currentCycleColor,
+                        borderWidth: 5.0,
+                        direction: Axis.vertical,
+                      ),
+                      // Time Text Overlay
+                      Text(
+                        _formatTime(_remainingSeconds),
+                        style: TextStyle(
+                          fontSize: 60.0,
+                          fontWeight: FontWeight.bold,
+                          // Dynamic contrast based on how full the liquid is? 
+                          // Simpler: Shadow for visibility on any background
+                          color: Colors.white,
+                          shadows: [
+                            Shadow(blurRadius: 4, color: Colors.black.withOpacity(0.5), offset: const Offset(1,1))
+                          ]
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                if (widget.cyclock.repeatIndefinitely)
+                
+                const SizedBox(height: 30),
+
+                // Centered Description
+                Text(
+                  currentStage.name,
+                  style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Step ${_currentStageIndex + 1} of ${_executionQueue.length}',
+                  style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyMedium?.color),
+                ),
+                 if (widget.cyclock.repeatIndefinitely)
                    Text('Loop ${_currentCycle + 1}', style: const TextStyle(fontWeight: FontWeight.bold)),
               ],
             ),
           ),
           
-          // Main Timer
-          Expanded(
-            child: Center(
-              child: CircularCountDownTimer(
-                duration: currentStage.durationSeconds,
-                initialDuration: _remainingSeconds,
-                controller: _countDownController,
-                width: MediaQuery.of(context).size.width * 0.7,
-                height: MediaQuery.of(context).size.height * 0.4,
-                ringColor: Colors.grey[300]!,
-                fillColor: _getStageColor(currentStage.color),
-                backgroundColor: Colors.transparent,
-                strokeWidth: 15.0,
-                strokeCap: StrokeCap.round,
-                textStyle: const TextStyle(fontSize: 48.0, fontWeight: FontWeight.bold),
-                textFormat: CountdownTextFormat.MM_SS,
-                isReverse: true,
-                isReverseAnimation: true,
-                isTimerTextShown: true,
-                autoStart: false,
-                onComplete: () {},
-              ),
-            ),
-          ),
-          
-          // Timeline
+          // 3. Timeline
           Container(
             height: 90,
             padding: const EdgeInsets.symmetric(vertical: 8),
@@ -244,14 +266,23 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
               itemCount: _executionQueue.length,
               itemBuilder: (context, index) {
                 final stage = _executionQueue[index];
+                // Logic: Border = Cycle Color (from _executionQueueColors), Background = Timer Color (stage.color)
+                final stageCycleColor = _executionQueueColors[index];
+                final stageTimerColor = _getStageColor(stage.color);
+                
                 final isCurrent = index == _currentStageIndex;
+                
                 return Container(
                   width: 70,
                   margin: const EdgeInsets.symmetric(horizontal: 4),
                   decoration: BoxDecoration(
-                    color: _getStageColor(stage.color).withOpacity(isCurrent ? 1.0 : 0.2),
+                    color: stageTimerColor.withOpacity(isCurrent ? 1.0 : 0.6),
                     borderRadius: BorderRadius.circular(8),
-                    border: isCurrent ? Border.all(color: Colors.black, width: 2) : null,
+                    // Border colored like the cycle
+                    border: Border.all(
+                      color: stageCycleColor, 
+                      width: isCurrent ? 4 : 2
+                    ),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -259,7 +290,8 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
                       Text(
                         _formatTime(stage.durationSeconds),
                         style: TextStyle(
-                          color: isCurrent ? Colors.white : Colors.black,
+                          // Ensure text is readable against timer background
+                          color: _getContrastingColor(stageTimerColor),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -270,7 +302,10 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
                           textAlign: TextAlign.center,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 10, color: isCurrent ? Colors.white : Colors.black),
+                          style: TextStyle(
+                            fontSize: 10, 
+                            color: _getContrastingColor(stageTimerColor)
+                          ),
                         ),
                       ),
                     ],
