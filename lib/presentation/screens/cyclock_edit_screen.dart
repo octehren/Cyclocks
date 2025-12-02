@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:cyclock/data/database.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:cyclock/helpers/sound_helper.dart';
+import 'package:audioplayers/audioplayers.dart'; // For preview of selected audio
 
 class CyclockEditScreen extends StatefulWidget {
   final AppDatabase database;
-  // --- Null for creation, not null for editing. ---
   final Cyclock? cyclock;
   
   const CyclockEditScreen({
@@ -20,6 +20,7 @@ class CyclockEditScreen extends StatefulWidget {
 
 class _CyclockEditScreenState extends State<CyclockEditScreen> {
   final _nameController = TextEditingController();
+  final AudioPlayer _audioPlayer = AudioPlayer(); // Audio Player for preview
   
   // Cyclock Global Settings
   bool _repeatIndefinitely = false;
@@ -45,7 +46,23 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
       _fuseSound = widget.cyclock!.fuseSound;
       _loadExistingCyclock();
     } else {
-      _addCycle(); // Start with 1 empty cycle
+      _addCycle(); 
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _audioPlayer.dispose(); // Clean up audio player
+    super.dispose();
+  }
+
+  Future<void> _playSound(String fileName) async {
+    try {
+      await _audioPlayer.stop();
+      await _audioPlayer.play(AssetSource('sounds/$fileName'));
+    } catch (e) {
+      debugPrint("Error playing sound preview: $e");
     }
   }
 
@@ -134,6 +151,7 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
   }
 
   Future<void> _saveCyclock() async {
+    // ... [Same logic as before] ...
     if (_nameController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enter a name')));
       return;
@@ -146,7 +164,6 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
     int cyclockId;
     final palette = _cycles.map((c) => _getColorString(c.backgroundColor)).toSet().join(',');
     
-    // 1. Prepare Data
     final companion = CyclocksCompanion(
       name: Value(_nameController.text),
       repeatIndefinitely: Value(_repeatIndefinitely),
@@ -156,7 +173,6 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
       fuseSound: Value(_fuseSound),
     );
 
-    // 2. Insert or Update Parent
     if (widget.cyclock != null) {
       cyclockId = widget.cyclock!.id;
       await widget.database.cyclocksDao.updateCyclock(widget.cyclock!.copyWith(
@@ -167,13 +183,11 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
         fuseDuration: _fuseDuration,
         fuseSound: _fuseSound,
       ));
-      // Clear old structure
       await widget.database.cyclesDao.deleteCyclesForCyclock(cyclockId);
     } else {
       cyclockId = await widget.database.cyclocksDao.insertCyclock(companion);
     }
 
-    // 3. Insert Children
     for (int i = 0; i < _cycles.length; i++) {
       final cycleForm = _cycles[i];
       final cycleId = await widget.database.cyclesDao.insertCycle(CyclesCompanion(
@@ -254,7 +268,6 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
           contentPadding: EdgeInsets.zero,
         ),
         
-        // Fuse Settings
         SwitchListTile(
           title: const Text('Start with Fuse?'),
           subtitle: Text(_hasFuse ? '$_fuseDuration sec' : 'Off'),
@@ -280,16 +293,19 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
                 ),
               ),
               const SizedBox(width: 16),
-              // Fuse Sound Dropdown (Loops only)
               DropdownButton<String>(
                 value: _fuseSound,
                 underline: Container(),
-                // If current value isn't in loop list (e.g. imported legacy data), handle gracefully
                 items: SoundHelper.loopSounds.map((s) {
                   return DropdownMenuItem(value: s.fileName, child: Text(s.name));
                 }).toList(),
                 onChanged: (v) => setState(() => _fuseSound = v!),
               ),
+              IconButton(
+                icon: const Icon(Icons.play_circle_fill),
+                color: Theme.of(context).primaryColor,
+                onPressed: () => _playSound(_fuseSound),
+              )
             ],
           ),
         ],
@@ -299,10 +315,14 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
 
   Widget _buildCycleCard(int index) {
     final cycle = _cycles[index];
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Card(
       key: ValueKey(cycle),
       margin: const EdgeInsets.symmetric(vertical: 8),
       elevation: 4,
+      // Fix Light Mode: Use explicit colors for the card background
+      color: isDark ? const Color(0xFF424242) : Colors.white,
       shape: RoundedRectangleBorder(
         side: BorderSide(color: cycle.backgroundColor, width: 3),
         borderRadius: BorderRadius.circular(12),
@@ -312,7 +332,6 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Cycle Header
             Row(
               children: [
                 const Icon(Icons.drag_handle, color: Colors.grey),
@@ -341,7 +360,6 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            // Background Color Picker
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
@@ -355,7 +373,7 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
                       decoration: BoxDecoration(
                         color: c,
                         shape: BoxShape.circle,
-                        border: cycle.backgroundColor == c ? Border.all(width: 2, color: Colors.black) : null
+                        border: cycle.backgroundColor == c ? Border.all(width: 2, color: isDark ? Colors.white : Colors.black) : null
                       ),
                     ),
                   )),
@@ -363,7 +381,6 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
               ),
             ),
             const Divider(),
-            // Timers
             ...cycle.stages.asMap().entries.map((entry) {
               return _buildTimerRow(cycle, entry.key, entry.value);
             }).toList(),
@@ -382,12 +399,13 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
   }
 
   Widget _buildTimerRow(CycleForm cycle, int index, TimerStageForm stage) {
+    // Fix Light Mode: Ensure container is visible against Card background
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: Colors.grey[300]!),
+        color: Theme.of(context).canvasColor, 
+        border: Border.all(color: Theme.of(context).dividerColor),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -398,12 +416,16 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
                 flex: 3,
                 child: TextFormField(
                   initialValue: stage.name,
-                  decoration: const InputDecoration(labelText: 'Task', isDense: true, contentPadding: EdgeInsets.all(12), border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                    labelText: 'Task', 
+                    isDense: true, 
+                    contentPadding: EdgeInsets.all(12), 
+                    border: OutlineInputBorder()
+                  ),
                   onChanged: (v) => stage.name = v,
                 ),
               ),
               const SizedBox(width: 8),
-              // Duration
               SizedBox(
                 width: 65,
                 child: DropdownButtonFormField<int>(
@@ -441,14 +463,17 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
                   ),
                )),
                const Spacer(),
-               const Icon(Icons.volume_up, size: 16, color: Colors.grey),
-               const SizedBox(width: 4),
-               // Timer Sound Dropdown (Triggers only)
+               // Sound Preview Trigger
+               IconButton(
+                 icon: const Icon(Icons.volume_up, size: 20, color: Colors.grey),
+                 onPressed: () => _playSound(stage.sound),
+                 tooltip: "Preview Sound",
+               ),
                DropdownButton<String>(
                  value: stage.sound,
                  isDense: true,
                  underline: Container(),
-                 style: const TextStyle(fontSize: 12, color: Colors.black),
+                 style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color),
                  items: SoundHelper.triggerSounds.map((s) {
                    return DropdownMenuItem(value: s.fileName, child: Text(s.name));
                  }).toList(),
@@ -460,14 +485,9 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
       ),
     );
   }
-  
-  @override
-  void dispose() {
-    _nameController.dispose();
-    super.dispose();
-  }
 }
 
+// ... [Keep CycleForm and TimerStageForm classes]
 class CycleForm {
   String name;
   int repeatCount;
