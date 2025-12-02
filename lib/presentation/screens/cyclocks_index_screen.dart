@@ -95,9 +95,8 @@ class _CyclocksIndexScreenState extends State<CyclocksIndexScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cyclock'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+        title: const Text('Cyclocks'),
+        foregroundColor: Theme.of(context).colorScheme.primary,
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
