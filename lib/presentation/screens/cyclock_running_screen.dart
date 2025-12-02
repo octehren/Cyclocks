@@ -24,7 +24,7 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
 
   int _currentStageIndex = 0;
   int _remainingSeconds = 0;
-  double _totalStageDuration = 1.0; // To calculate percentage
+  double _totalStageDuration = 1.0; 
   
   bool _isRunning = false;
   int _currentCycle = 0;
@@ -82,7 +82,6 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
           _currentStageIndex = stageIndex % flattenedQueue.length;
           _remainingSeconds = remainingSeconds;
           
-          // Update total duration ref for percentage calculation
           if (stageIndex < flattenedQueue.length) {
             _totalStageDuration = flattenedQueue[stageIndex].durationSeconds.toDouble();
             if (_totalStageDuration == 0) _totalStageDuration = 1;
@@ -138,7 +137,6 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
         _totalStageDuration = _executionQueue[0].durationSeconds.toDouble();
       }
     });
-    // BUG FIX: Don't mess with controller restart/stop if logic engine handles it
     _timerEngine.stop();
   }
   
@@ -186,8 +184,6 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
     final currentCycleColor = _executionQueueColors[_currentStageIndex];
     final timerColor = _getStageColor(currentStage.color);
     
-    // Calculate percentage for liquid fill (0.0 to 1.0)
-    // Liquid fills from bottom, so we want (Current / Total)
     double percent = (_remainingSeconds / _totalStageDuration).clamp(0.0, 1.0);
 
     return Scaffold(
@@ -195,144 +191,168 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
       appBar: AppBar(
         title: Text(widget.cyclock.name),
         backgroundColor: currentCycleColor,
-        // Ensure contrast on AppBar
         foregroundColor: _getContrastingColor(currentCycleColor),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // 1. Liquid Timer
-                SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.7,
-                  height: MediaQuery.of(context).size.width * 0.7,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Liquid Effect
-                      LiquidCircularProgressIndicator(
-                        value: percent, 
-                        valueColor: AlwaysStoppedAnimation(timerColor),
-                        backgroundColor: Colors.grey[300]!, 
-                        borderColor: currentCycleColor,
-                        borderWidth: 5.0,
-                        direction: Axis.vertical,
-                      ),
-                      // Time Text Overlay
-                      Text(
-                        _formatTime(_remainingSeconds),
-                        style: TextStyle(
-                          fontSize: 60.0,
-                          fontWeight: FontWeight.bold,
-                          // Dynamic contrast based on how full the liquid is? 
-                          // Simpler: Shadow for visibility on any background
-                          color: Colors.white,
-                          shadows: [
-                            Shadow(blurRadius: 4, color: Colors.black.withOpacity(0.5), offset: const Offset(1,1))
-                          ]
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                
-                const SizedBox(height: 30),
-
-                // Centered Description
-                Text(
-                  currentStage.name,
-                  style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Step ${_currentStageIndex + 1} of ${_executionQueue.length}',
-                  style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyMedium?.color),
-                ),
-                 if (widget.cyclock.repeatIndefinitely)
-                   Text('Loop ${_currentCycle + 1}', style: const TextStyle(fontWeight: FontWeight.bold)),
-              ],
-            ),
-          ),
-          
-          // 3. Timeline
-          Container(
-            height: 90,
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: _executionQueue.length,
-              itemBuilder: (context, index) {
-                final stage = _executionQueue[index];
-                // Logic: Border = Cycle Color (from _executionQueueColors), Background = Timer Color (stage.color)
-                final stageCycleColor = _executionQueueColors[index];
-                final stageTimerColor = _getStageColor(stage.color);
-                
-                final isCurrent = index == _currentStageIndex;
-                
-                return Container(
-                  width: 70,
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  decoration: BoxDecoration(
-                    color: stageTimerColor.withOpacity(isCurrent ? 1.0 : 0.6),
-                    borderRadius: BorderRadius.circular(8),
-                    // Border colored like the cycle
-                    border: Border.all(
-                      color: stageCycleColor, 
-                      width: isCurrent ? 4 : 2
+      body: SafeArea( 
+        child: Column(
+          children: [
+            // Upper Section: Timer + Description
+            Expanded(
+              child: Column(
+                children: [
+                  // 1. TIMER SECTION
+                  Expanded(
+                    flex: 5,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        double minDimension = constraints.maxWidth < constraints.maxHeight 
+                            ? constraints.maxWidth 
+                            : constraints.maxHeight;
+                        double timerSize = minDimension * 0.75;
+      
+                        return Center(
+                          child: SizedBox(
+                            width: timerSize,
+                            height: timerSize,
+                            child: LiquidCircularProgressIndicator(
+                              value: percent, 
+                              valueColor: AlwaysStoppedAnimation(timerColor),
+                              backgroundColor: Colors.grey[300]!, 
+                              borderColor: currentCycleColor,
+                              borderWidth: 5.0,
+                              direction: Axis.vertical,
+                              center: Text(
+                                _formatTime(_remainingSeconds),
+                                style: TextStyle(
+                                  fontSize: timerSize * 0.25, 
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  shadows: [
+                                    Shadow(blurRadius: 4, color: Colors.black.withOpacity(0.5), offset: const Offset(1,1))
+                                  ]
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        _formatTime(stage.durationSeconds),
-                        style: TextStyle(
-                          // Ensure text is readable against timer background
-                          color: _getContrastingColor(stageTimerColor),
-                          fontWeight: FontWeight.bold,
-                        ),
+      
+                  // 2. DESCRIPTION SECTION
+                  Expanded(
+                    flex: 2,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Flexible(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                currentStage.name,
+                                style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Step ${_currentStageIndex + 1} of ${_executionQueue.length}',
+                            style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyMedium?.color),
+                          ),
+                          if (widget.cyclock.repeatIndefinitely)
+                            Text('Loop ${_currentCycle + 1}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        ],
                       ),
-                      Padding(
-                        padding: const EdgeInsets.all(2.0),
-                        child: Text(
-                          stage.name,
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 10, 
-                            color: _getContrastingColor(stageTimerColor)
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // 3. TIMELINE (CENTERED)
+            Container(
+              height: 90,
+              width: double.infinity, // Occupy full width
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              // Use Center to align the SingleChildScrollView when content < screen width
+              child: Center(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min, // Shrink Row to fit children
+                    children: _executionQueue.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final stage = entry.value;
+                      
+                      final stageCycleColor = _executionQueueColors[index];
+                      final stageTimerColor = _getStageColor(stage.color);
+                      final isCurrent = index == _currentStageIndex;
+                      
+                      return Container(
+                        width: 70,
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        decoration: BoxDecoration(
+                          color: stageTimerColor.withOpacity(isCurrent ? 1.0 : 0.6),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: stageCycleColor, 
+                            width: isCurrent ? 4 : 2
                           ),
                         ),
-                      ),
-                    ],
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              _formatTime(stage.durationSeconds),
+                              style: TextStyle(
+                                color: _getContrastingColor(stageTimerColor),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(2.0),
+                              child: Text(
+                                stage.name,
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 10, 
+                                  color: _getContrastingColor(stageTimerColor)
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
                   ),
-                );
-              },
+                ),
+              ),
             ),
-          ),
-          
-          // Controls
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildButton('Stop', Colors.red, _stopTimer),
-                if (!_isRunning)
-                  _buildButton('Start', Colors.green, _startTimer)
-                else
-                  _buildButton('Pause', Colors.orange, _pauseTimer),
-                  
-                if (!_isRunning && _currentStageIndex > 0)
-                  _buildButton('Resume', Colors.blue, _resumeTimer),
-              ],
+            
+            // 4. CONTROLS
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildButton('Stop', Colors.red, _stopTimer),
+                  if (!_isRunning)
+                    _buildButton('Start', Colors.green, _startTimer)
+                  else
+                    _buildButton('Pause', Colors.orange, _pauseTimer),
+                    
+                  if (!_isRunning && _currentStageIndex > 0)
+                    _buildButton('Resume', Colors.blue, _resumeTimer),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
