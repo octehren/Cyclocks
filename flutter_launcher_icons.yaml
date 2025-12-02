@@ -1,0 +1,25 @@
+flutter_launcher_icons:
+  # Generic path for platforms that don't need specific handling
+  image_path: "assets/icon/app_icon.png"
+
+  # Android Configuration
+  android: "ic_launcher" # The icon name in Android folders
+  # For best results on Android 8+, use adaptive icons:
+  # adaptive_icon_background: "#FFFFFF" # Or path to an image: "assets/icon/background.png"
+  # adaptive_icon_foreground: "assets/icon/app_icon.png" 
+  min_sdk_android: 21 # Best practice
+
+  # Desktop Configurations
+  windows:
+    generate: true
+    icon_size: 48 # standard windows size generator base
+  
+  linux:
+    generate: true
+    icon_size: 48
+  
+  # Web/iOS (Optional, set to true if you need them later)
+  web:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+  ios: true
