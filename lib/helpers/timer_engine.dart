@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cyclock/data/database.dart';
-import 'package:cyclock/helpers/sound_helper.dart'; // Import the new helper
+import 'package:cyclock/helpers/sound_helper.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';  // Allows app not to sleep on mobile devices
 
 class TimerEngine {
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -30,6 +31,25 @@ class TimerEngine {
     _currentStageIndex = 0;
     _isRunning = false;
     _isPaused = false;
+
+    // ANDROID SETUP: Ensure audio plays even if screen dims/locks momentarily
+    final AudioContext audioContext = AudioContext(
+      // iOS: AudioContextIOS(
+      //   category: AVAudioSessionCategory.playback,
+      //   options: const {
+      //     AVAudioSessionOptions.mixWithOthers,
+      //     AVAudioSessionOptions.duckOthers,
+      //   },
+      // ),
+      android: AudioContextAndroid(
+        isSpeakerphoneOn: true,
+        stayAwake: true,
+        contentType: AndroidContentType.sonification,
+        usageType: AndroidUsageType.assistanceSonification,
+        audioFocus: AndroidAudioFocus.gain,
+      ),
+    );
+    AudioPlayer.global.setAudioContext(audioContext);
     
     // Reset player mode
     _audioPlayer.setReleaseMode(ReleaseMode.stop);
@@ -44,6 +64,9 @@ class TimerEngine {
     
     _isRunning = true;
     _isPaused = false;
+
+    // ENABLE WAKELOCK: Keep screen on while timer runs
+    WakelockPlus.enable();
     
     // Play sound immediately when starting/resuming a stage
     _playCurrentStageSound();
@@ -63,6 +86,9 @@ class TimerEngine {
     _isRunning = true;
     _isPaused = false;
     _audioPlayer.resume(); // Resume audio
+    // RE-ENABLE WAKELOCK: Keep screen on while timer runs
+    WakelockPlus.enable();
+
     _startTicker();
   }
   
@@ -74,6 +100,9 @@ class TimerEngine {
     _isPaused = false;
     _currentStageIndex = 0;
     _currentCycle = 0;
+
+    // DISABLE WAKELOCK
+    WakelockPlus.disable();
     
     if (_stages.isNotEmpty) {
       _remainingSeconds = _stages.first.durationSeconds;
@@ -151,5 +180,6 @@ class TimerEngine {
   void dispose() {
     _currentTimer?.cancel();
     _audioPlayer.dispose();
+    WakelockPlus.disable(); // Safety cleanup
   }
 }
