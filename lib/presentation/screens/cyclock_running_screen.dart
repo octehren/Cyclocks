@@ -156,6 +156,7 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
     }
   }
 
+  // Used only for the timeline boxes which have colored backgrounds
   Color _getContrastingColor(Color background) {
     return ThemeData.estimateBrightnessForColor(background) == Brightness.dark 
         ? Colors.white 
@@ -181,17 +182,17 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
     }
     
     final currentStage = _executionQueue[_currentStageIndex];
+    // We still need colors for the timer borders/fill, but NOT for the scaffold/appbar
     final currentCycleColor = _executionQueueColors[_currentStageIndex];
     final timerColor = _getStageColor(currentStage.color);
     
     double percent = (_remainingSeconds / _totalStageDuration).clamp(0.0, 1.0);
 
     return Scaffold(
-      backgroundColor: currentCycleColor.withOpacity(0.1),
+      // CHANGED: Removed custom background color. Uses Theme default.
       appBar: AppBar(
         title: Text(widget.cyclock.name),
-        backgroundColor: currentCycleColor,
-        foregroundColor: _getContrastingColor(currentCycleColor),
+        // CHANGED: Removed custom background/foreground colors. Uses Theme default.
       ),
       body: SafeArea( 
         child: Column(
@@ -252,7 +253,10 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
                               fit: BoxFit.scaleDown,
                               child: Text(
                                 currentStage.name,
-                                style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                                // CHANGED: Use Theme text styles
+                                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                                 textAlign: TextAlign.center,
                               ),
                             ),
@@ -260,10 +264,17 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
                           const SizedBox(height: 8),
                           Text(
                             'Step ${_currentStageIndex + 1} of ${_executionQueue.length}',
-                            style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyMedium?.color),
+                            // CHANGED: Use Theme text styles
+                            style: Theme.of(context).textTheme.bodyMedium,
                           ),
                           if (widget.cyclock.repeatIndefinitely)
-                            Text('Loop ${_currentCycle + 1}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                            Text(
+                              'Loop ${_currentCycle + 1}', 
+                              // CHANGED: Use Theme text styles
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -275,14 +286,13 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
             // 3. TIMELINE (CENTERED)
             Container(
               height: 90,
-              width: double.infinity, // Occupy full width
+              width: double.infinity, 
               padding: const EdgeInsets.symmetric(vertical: 8),
-              // Use Center to align the SingleChildScrollView when content < screen width
               child: Center(
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
-                    mainAxisSize: MainAxisSize.min, // Shrink Row to fit children
+                    mainAxisSize: MainAxisSize.min,
                     children: _executionQueue.asMap().entries.map((entry) {
                       final index = entry.key;
                       final stage = entry.value;
@@ -308,6 +318,7 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
                             Text(
                               _formatTime(stage.durationSeconds),
                               style: TextStyle(
+                                // Keep this logic for boxes with specific colored backgrounds
                                 color: _getContrastingColor(stageTimerColor),
                                 fontWeight: FontWeight.bold,
                               ),
@@ -321,6 +332,7 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontSize: 10, 
+                                  // Keep this logic for boxes with specific colored backgrounds
                                   color: _getContrastingColor(stageTimerColor)
                                 ),
                               ),
