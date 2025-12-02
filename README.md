@@ -50,6 +50,7 @@ sudo pacman -S gstreamer gst-plugins-base gst-plugins-good gst-plugins-bad gst-p
   - Timers will have the border colored like the cycle color & the background like timer color
   - Edit screen: click on sound icon & play selected sound
   - BUG: clicking 'stop' on finished timer will raise an error.
+  - Edit page broken on light mode, running cyclock page broken on dark mode (cycle totally dark)
 - 02-sound-mechanics
   Add basic sound mechanics, like playing a sound on trigger of new timer and adding fuse timers (these will loop and only play at the beginning).
 - 01-add-cycles
