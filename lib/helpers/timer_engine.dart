@@ -14,6 +14,9 @@ class TimerEngine {
   int _totalCycles = 1;
   bool _isRunning = false;
   bool _isPaused = false;
+  // Checks end of current stage to calculate delta-time so even if device (usually mobile) sleeps,
+  // app uses past Time.now to current Time.now instead of relying on computer clock
+  DateTime? _stageEndTime; // Add this class variable
   
   Function(int stageIndex, int remainingSeconds)? onTick;
   Function(int stageIndex)? onStageComplete;
@@ -110,7 +113,21 @@ class TimerEngine {
   }
   
   void _startTicker() {
+    // Calculate when this specific stage should end based on NOW + Remaining
+    _stageEndTime = DateTime.now().add(Duration(seconds: _remainingSeconds));
+
     _currentTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!_isRunning) {
+        timer.cancel();
+        return;
+      }
+
+      final now = DateTime.now();
+      // Calculate remaining based on real time difference
+      final remaining = _stageEndTime!.difference(now).inSeconds;
+      
+      // Update local variable for display
+      _remainingSeconds = remaining;
       if (_remainingSeconds <= 0) {
         timer.cancel();
         _audioPlayer.stop(); // Stop any looping sounds from previous stage
@@ -118,7 +135,8 @@ class TimerEngine {
         _currentStageIndex++;
         _handleStageTransition();
       } else {
-        _remainingSeconds--;
+        // _remainingSeconds is now updated above
+        // _remainingSeconds--;
         onTick?.call(_currentStageIndex, _remainingSeconds);
       }
     });
@@ -130,6 +148,9 @@ class TimerEngine {
     } else {
       final nextStage = _stages[_currentStageIndex];
       _remainingSeconds = nextStage.durationSeconds;
+      
+      // Reset the target time for the new stage
+      _stageEndTime = DateTime.now().add(Duration(seconds: _remainingSeconds));
       
       if (_isRunning) {
         _playCurrentStageSound();
