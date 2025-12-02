@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- ALLOWS APP NOT TO SLEEP WHILE RUNNING -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" /> 
     <application
         android:label="cyclock"
         android:name="${applicationName}"
