@@ -313,7 +313,7 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
     );
   }
 
-  Widget _buildCycleCard(int index) {
+    Widget _buildCycleCard(int index) {
     final cycle = _cycles[index];
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -321,8 +321,8 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
       key: ValueKey(cycle),
       margin: const EdgeInsets.symmetric(vertical: 8),
       elevation: 4,
-      // Fix Light Mode: Use explicit colors for the card background
-      color: isDark ? const Color(0xFF424242) : Colors.white,
+      // CHANGED: Use the selected color with low opacity for the background
+      color: cycle.backgroundColor.withOpacity(isDark ? 0.15 : 0.1), 
       shape: RoundedRectangleBorder(
         side: BorderSide(color: cycle.backgroundColor, width: 3),
         borderRadius: BorderRadius.circular(12),
@@ -332,6 +332,7 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header Row
             Row(
               children: [
                 const Icon(Icons.drag_handle, color: Colors.grey),
@@ -360,6 +361,8 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
               ],
             ),
             const SizedBox(height: 8),
+            
+            // Color Picker
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
@@ -373,7 +376,10 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
                       decoration: BoxDecoration(
                         color: c,
                         shape: BoxShape.circle,
-                        border: cycle.backgroundColor == c ? Border.all(width: 2, color: isDark ? Colors.white : Colors.black) : null
+                        // Fix for Dark Mode white border visibility
+                        border: cycle.backgroundColor == c 
+                            ? Border.all(width: 2, color: isDark ? Colors.white : Colors.black) 
+                            : null
                       ),
                     ),
                   )),
@@ -381,6 +387,8 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
               ),
             ),
             const Divider(),
+            
+            // Timers List
             ...cycle.stages.asMap().entries.map((entry) {
               return _buildTimerRow(cycle, entry.key, entry.value);
             }).toList(),
