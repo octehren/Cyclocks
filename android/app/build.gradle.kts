@@ -6,13 +6,20 @@ plugins {
 }
 
 android {
-    namespace = "com.example.cyclock"
+    namespace = "com.example.cyclocks"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        //sourceCompatibility = JavaVersion.VERSION_11
+        //targetCompatibility = JavaVersion.VERSION_11
+
+        // 1. Enable the flag
+        coreLibraryDesugaringEnabled true
+
+        // 2. Ensure you are targeting Java 8
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     kotlinOptions {
@@ -20,14 +27,15 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.cyclock"
+        // Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        applicationId = "com.example.cyclocks"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        multiDexEnabled true
     }
 
     buildTypes {
@@ -41,4 +49,11 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // 3. Add the actual library that contains the backported code
+    // Check for the latest version, but 2.0.4 is standard for recent projects
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
+    implementation 'androidx.multidex:multidex:2.0.1'
 }
