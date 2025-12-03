@@ -19,27 +19,20 @@ class AppSound {
 
 class SoundHelper {
   static const List<AppSound> allSounds = [
+        // --- Loops (For Fuses) ---
+    AppSound(name: 'Alert', fileName: 'low_beep.wav', type: SoundType.loop),
+    AppSound(name: 'Fuse Burn', fileName: 'fuseburn.wav', type: SoundType.loop),
+    AppSound(name: 'Static TV', fileName: 'teevea.wav', type: SoundType.loop),
     // // --- Triggers (For Timer Stages) ---
+    AppSound(name: 'Beep x3', fileName: 'soundCountdown.wav', type: SoundType.trigger),
     AppSound(name: 'Ding', fileName: 'ding_bellboy.wav', type: SoundType.trigger),
-    AppSound(name: 'Double Ding', fileName: 'ding_double_bellboy.ogg', type: SoundType.trigger),
+    AppSound(name: 'Double Ding', fileName: 'ding_double_bellboy.wav', type: SoundType.trigger),
+    AppSound(name: 'Game On!', fileName: 'soundGameOn.wav', type: SoundType.trigger),
+    AppSound(name: 'Hit, Crowd Cheers', fileName: 'soundHitCrowdCheer.wav', type: SoundType.trigger),
     AppSound(name: 'Powerup', fileName: 'powerup.wav', type: SoundType.trigger),
     AppSound(name: 'Rooster', fileName: 'rooster.wav', type: SoundType.trigger),
-    AppSound(name: 'Xylophone', fileName: 'mxylo2.ogg', type: SoundType.trigger),
-    
-    
-    // Examples:
-    // AppSound(name: 'Beep', fileName: 'beep.mp3', type: SoundType.trigger),
-    // AppSound(name: 'Bell', fileName: 'bell.mp3', type: SoundType.trigger),
-    // AppSound(name: 'Chime', fileName: 'chime.mp3', type: SoundType.trigger),
-    // AppSound(name: 'Whistle', fileName: 'whistle.mp3', type: SoundType.trigger),
-    // AppSound(name: 'Arcade', fileName: 'arcade.mp3', type: SoundType.trigger),
-    // AppSound(name: 'Timer Start', fileName: 'timer_start.mp3', type: SoundType.trigger),
-    AppSound(name: 'Fuse Burn', fileName: 'fuseburn.wav', type: SoundType.loop),
-    AppSound(name: 'Low Alert', fileName: 'beep.ogg', type: SoundType.loop),
-    // // --- Loops (For Fuses) ---
-    // AppSound(name: 'Fuse Burn', fileName: 'fuseburn.wav', type: SoundType.loop),
-    // AppSound(name: 'Ticking Clock', fileName: 'ticking.mp3', type: SoundType.loop),
-    // AppSound(name: 'White Noise', fileName: 'whitenoise.mp3', type: SoundType.loop),
+    AppSound(name: 'Unfolding', fileName: 'soundBallMedium.wav', type: SoundType.trigger),
+    AppSound(name: 'Xylophone', fileName: 'mxylo2.wav', type: SoundType.trigger),
   ];
 
   // Getters for UI filtering
