@@ -32,7 +32,7 @@ class DatabaseHelper {
       db, pomodoroId, 1, "Final Set", 1, "green",
       [
         _makeStage(0, 'Work', 25 * 60, 'red', 'rooster.wav'),
-        _makeStage(1, 'Long Break', 30 * 60, 'green', 'ding_double_bellboy.ogg'),
+        _makeStage(1, 'Long Break', 30 * 60, 'green', 'ding_double_bellboy.wav'),
       ]
     );
     
@@ -59,7 +59,7 @@ class DatabaseHelper {
     await _createCycle(
       db, squatsId, 1, "Final Burn", 1, "darkblue",
       [
-        _makeStage(0, 'Exercise', 2 * 60, 'darkblue', 'timer_start'),
+        _makeStage(0, 'Exercise', 2 * 60, 'darkblue', 'ding_double_bellboy.wav'),
       ]
     );
   }
