@@ -1,4 +1,4 @@
-package com.example.cyclock
+package com.example.cyclocks
 
 import io.flutter.embedding.android.FlutterActivity
 
