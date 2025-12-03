@@ -21,9 +21,10 @@ void main() async {
   tz.initializeTimeZones();
 
   // 2. Initialize Notifications
+  // Android Notifs
   const AndroidInitializationSettings initializationSettingsAndroid =
       AndroidInitializationSettings('@mipmap/ic_launcher');
-
+  // mac & iOS notifs
   const DarwinInitializationSettings initializationSettingsDarwin =
       DarwinInitializationSettings(
     requestSoundPermission: true,
@@ -31,9 +32,19 @@ void main() async {
     requestAlertPermission: true,
   );
 
+  // Linux Notifs
+  const LinuxInitializationSettings initializationSettingsLinux =
+      LinuxInitializationSettings(
+    defaultActionName: 'Open notification',
+  );
+
   const InitializationSettings initializationSettings = InitializationSettings(
     android: initializationSettingsAndroid,
     iOS: initializationSettingsDarwin,
+    macOS: initializationSettingsDarwin, // macOS uses the same as iOS
+    linux: initializationSettingsLinux,  // Linux specific
+    // Windows is handled automatically by the plugin defaults usually, 
+    // or doesn't require specific init settings object in basic cases.
   );
 
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
