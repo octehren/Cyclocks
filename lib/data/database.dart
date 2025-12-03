@@ -1,7 +1,7 @@
 // Conditional imports remain the same
-import 'package:cyclock/data/connection/unsupported.dart'
-    if (dart.library.html) 'package:cyclock/data/connection/web.dart'
-    if (dart.library.io) 'package:cyclock/data/connection/native.dart'
+import 'package:cyclocks/data/connection/unsupported.dart'
+    if (dart.library.html) 'package:cyclocks/data/connection/web.dart'
+    if (dart.library.io) 'package:cyclocks/data/connection/native.dart'
     as db_connection;
 
 import 'package:drift/drift.dart';

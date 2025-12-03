@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:cyclock/data/database.dart';
-import 'package:cyclock/providers/settings_provider.dart';
-import 'package:cyclock/presentation/screens/instructions_screen.dart';
-import 'package:cyclock/presentation/screens/cyclock_edit_screen.dart'; // both creates & edits
+import 'package:cyclocks/data/database.dart';
+import 'package:cyclocks/providers/settings_provider.dart';
+import 'package:cyclocks/presentation/screens/instructions_screen.dart';
+import 'package:cyclocks/presentation/screens/cyclock_edit_screen.dart'; // both creates & edits
 
 class SettingsScreen extends StatelessWidget {
   final AppDatabase database;

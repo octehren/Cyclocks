@@ -1,8 +1,8 @@
 import 'dart:async'; // Added for StreamSubscription of fuse audio
 import 'package:flutter/material.dart';
-import 'package:cyclock/data/database.dart';
+import 'package:cyclocks/data/database.dart';
 import 'package:drift/drift.dart' show Value;
-import 'package:cyclock/helpers/sound_helper.dart';
+import 'package:cyclocks/helpers/sound_helper.dart';
 import 'package:audioplayers/audioplayers.dart';
 
 class CyclockEditScreen extends StatefulWidget {

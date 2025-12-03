@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:cyclock/data/database.dart';
-import 'package:cyclock/presentation/screens/cyclock_running_screen.dart';
-import 'package:cyclock/presentation/screens/settings_screen.dart';
-import 'package:cyclock/presentation/screens/cyclock_edit_screen.dart';
+import 'package:cyclocks/data/database.dart';
+import 'package:cyclocks/presentation/screens/cyclock_running_screen.dart';
+import 'package:cyclocks/presentation/screens/settings_screen.dart';
+import 'package:cyclocks/presentation/screens/cyclock_edit_screen.dart';
 
 class CyclocksIndexScreen extends StatefulWidget {
   final AppDatabase database;

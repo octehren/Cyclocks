@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cyclock/data/database.dart';
-import 'package:cyclock/presentation/screens/cyclocks_index_screen.dart';
-import 'package:cyclock/helpers/theme.dart';
-import 'package:cyclock/helpers/database_helper.dart';
-import 'package:cyclock/providers/settings_provider.dart';
+import 'package:cyclocks/data/database.dart';
+import 'package:cyclocks/presentation/screens/cyclocks_index_screen.dart';
+import 'package:cyclocks/helpers/theme.dart';
+import 'package:cyclocks/helpers/database_helper.dart';
+import 'package:cyclocks/providers/settings_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

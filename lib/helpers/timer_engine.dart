@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:cyclock/data/database.dart';
-import 'package:cyclock/helpers/sound_helper.dart';
+import 'package:cyclocks/data/database.dart';
+import 'package:cyclocks/helpers/sound_helper.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';  // Allows app not to sleep on mobile devices
 
 class TimerEngine {

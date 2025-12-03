@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:liquid_progress_indicator_v2/liquid_progress_indicator.dart';
-import 'package:cyclock/data/database.dart';
-import 'package:cyclock/helpers/timer_engine.dart';
+import 'package:cyclocks/data/database.dart';
+import 'package:cyclocks/helpers/timer_engine.dart';
 
 class CyclockRunningScreen extends StatefulWidget {
   final AppDatabase database;

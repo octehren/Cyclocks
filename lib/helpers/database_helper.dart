@@ -1,5 +1,5 @@
 import 'package:drift/drift.dart';
-import 'package:cyclock/data/database.dart';
+import 'package:cyclocks/data/database.dart';
 
 class DatabaseHelper {
   static Future<void> initializeDefaultCyclocks(AppDatabase db) async {
