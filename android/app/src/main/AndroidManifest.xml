@@ -1,6 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- ALLOWS APP NOT TO SLEEP WHILE RUNNING -->
     <uses-permission android:name="android.permission.WAKE_LOCK" /> 
+    <!-- SENDS NOTIFICATIONS WHEN LOCKED -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:label="cyclock"
         android:name="${applicationName}"
