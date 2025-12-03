@@ -36,6 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
 
   drift: ^2.29.0
+  flutter_local_notifications: ^17.0.0 # Send notifs for mobile when these are locked.
   sqlite3_flutter_libs: ^0.5.0
   path_provider: ^2.1.0
   path: ^1.8.0
@@ -45,6 +46,7 @@ dependencies:
   shared_preferences: ^2.2.2
   file_picker: ^5.5.0
   liquid_progress_indicator_v2: ^0.5.0
+  timezone: ^0.9.2
   wakelock_plus: ^1.1.0 # Helps to keep android awake
 
 dev_dependencies:
