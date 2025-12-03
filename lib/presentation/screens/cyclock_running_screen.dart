@@ -14,6 +14,8 @@
 // ==============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Detect Keyboard Keys
+import 'package:flutter/foundation.dart'; // Detect Platform
 import 'package:liquid_progress_indicator_v2/liquid_progress_indicator.dart';
 import 'package:cyclocks/data/database.dart';
 import 'package:cyclocks/helpers/timer_engine.dart';
@@ -205,27 +207,59 @@ class _CyclockRunningScreenState extends State<CyclockRunningScreen> {
     // Prevent jumping to the currently running step
     if (index == _currentStageIndex) return;
 
-    // Show Confirmation
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("Jump to Step?"),
-        content: Text("Do you want to skip to '${_executionQueue[index].name}'?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(), // Cancel
-            child: const Text("Cancel"),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            onPressed: () {
-              Navigator.of(ctx).pop(); // Close dialog
-              _performJump(index); // Execute Jump
+      builder: (ctx) {
+        // 1. Build the Dialog Content
+        Widget dialog = AlertDialog(
+          title: const Text("Jump to Step?"),
+          content: Text("Do you want to skip to '${_executionQueue[index].name}'?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(), // Cancel
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              onPressed: () {
+                Navigator.of(ctx).pop(); // Close dialog
+                _performJump(index); // Execute Jump
+              },
+              child: const Text("Jump"),
+            ),
+          ],
+        );
+
+        // 2. Check if Desktop (Windows/Mac/Linux)
+        // kIsWeb check prevents 'Platform' errors on web
+        bool isDesktop = !kIsWeb && 
+            (defaultTargetPlatform == TargetPlatform.windows || 
+             defaultTargetPlatform == TargetPlatform.linux || 
+             defaultTargetPlatform == TargetPlatform.macOS);
+
+        // 3. Add Keyboard Listeners for Desktop
+        if (isDesktop) {
+          return CallbackShortcuts(
+            bindings: {
+              // Enter -> Confirm Jump
+              const SingleActivator(LogicalKeyboardKey.enter): () {
+                Navigator.of(ctx).pop();
+                _performJump(index);
+              },
+              // Escape -> Cancel (Navigator.pop)
+              const SingleActivator(LogicalKeyboardKey.escape): () {
+                Navigator.of(ctx).pop();
+              },
             },
-            child: const Text("Jump"),
-          ),
-        ],
-      ),
+            child: Focus(
+              autofocus: true, // Grab focus so keys work immediately
+              child: dialog,
+            ),
+          );
+        }
+
+        return dialog;
+      },
     );
   }
 
