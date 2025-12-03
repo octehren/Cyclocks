@@ -5,10 +5,39 @@ import 'package:cyclocks/presentation/screens/cyclocks_index_screen.dart';
 import 'package:cyclocks/helpers/theme.dart';
 import 'package:cyclocks/helpers/database_helper.dart';
 import 'package:cyclocks/providers/settings_provider.dart';
+// SEND NOTIFICATIONS IN MOBILE DEVICES
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+
+// GLOBAL NOTIFICATION INSTANCE
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final database = AppDatabase();
+
+  // 1. Initialize Timezone Database
+  tz.initializeTimeZones();
+
+  // 2. Initialize Notifications
+  const AndroidInitializationSettings initializationSettingsAndroid =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
+
+  const DarwinInitializationSettings initializationSettingsDarwin =
+      DarwinInitializationSettings(
+    requestSoundPermission: true,
+    requestBadgePermission: true,
+    requestAlertPermission: true,
+  );
+
+  const InitializationSettings initializationSettings = InitializationSettings(
+    android: initializationSettingsAndroid,
+    iOS: initializationSettingsDarwin,
+  );
+
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
   await DatabaseHelper.initializeDefaultCyclocks(database);
   
   runApp(MyApp(database: database));

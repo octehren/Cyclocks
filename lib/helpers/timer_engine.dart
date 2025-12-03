@@ -3,6 +3,10 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:cyclocks/data/database.dart';
 import 'package:cyclocks/helpers/sound_helper.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';  // Allows app not to sleep on mobile devices
+// NOTIFICATIONS ON MOBILE DEVICES
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:cyclocks/main.dart'; // To access the global notification plugin
 
 class TimerEngine {
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -16,7 +20,7 @@ class TimerEngine {
   bool _isPaused = false;
   // Checks end of current stage to calculate delta-time so even if device (usually mobile) sleeps,
   // app uses past Time.now to current Time.now instead of relying on computer clock
-  DateTime? _stageEndTime; // Add this class variable
+  DateTime? _stageEndTime;
   
   Function(int stageIndex, int remainingSeconds)? onTick;
   Function(int stageIndex)? onStageComplete;
@@ -81,6 +85,8 @@ class TimerEngine {
     _audioPlayer.pause(); // Pause audio if it's a loop
     _isRunning = false;
     _isPaused = true;
+    // CANCEL ANY PENDING ALARM
+    flutterLocalNotificationsPlugin.cancelAll();
   }
   
   void resume() {
@@ -88,9 +94,9 @@ class TimerEngine {
     
     _isRunning = true;
     _isPaused = false;
-    _audioPlayer.resume(); // Resume audio
     // RE-ENABLE WAKELOCK: Keep screen on while timer runs
     WakelockPlus.enable();
+    _audioPlayer.resume(); // Resume audio
 
     _startTicker();
   }
@@ -106,6 +112,9 @@ class TimerEngine {
 
     // DISABLE WAKELOCK
     WakelockPlus.disable();
+
+    // CANCEL ALARMS
+    flutterLocalNotificationsPlugin.cancelAll();
     
     if (_stages.isNotEmpty) {
       _remainingSeconds = _stages.first.durationSeconds;
@@ -115,6 +124,10 @@ class TimerEngine {
   void _startTicker() {
     // Calculate when this specific stage should end based on NOW + Remaining
     _stageEndTime = DateTime.now().add(Duration(seconds: _remainingSeconds));
+
+    // 2. SCHEDULE NOTIFICATION
+    // If the app dies/sleeps, this notification will wake the user up.
+    _scheduleStageEndNotification(_remainingSeconds);
 
     _currentTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!_isRunning) {
@@ -131,6 +144,10 @@ class TimerEngine {
       if (_remainingSeconds <= 0) {
         timer.cancel();
         _audioPlayer.stop(); // Stop any looping sounds from previous stage
+        // Timer finished normally while app was open, 
+        // cancel the backup notification so we don't get double sound.
+        flutterLocalNotificationsPlugin.cancel(0); 
+
         onStageComplete?.call(_currentStageIndex);
         _currentStageIndex++;
         _handleStageTransition();
@@ -157,6 +174,48 @@ class TimerEngine {
         _startTicker();
       }
     }
+  }
+
+  // Schedules a notification for when the timer hits 0
+  Future<void> _scheduleStageEndNotification(int secondsFromNow) async {
+    if (secondsFromNow <= 0) return;
+
+    // Determine the name of the NEXT stage (what starts when this ends)
+    String nextUp = "Next stage starting";
+    if (_currentStageIndex + 1 < _stages.length) {
+      nextUp = "Up next: ${_stages[_currentStageIndex + 1].name}";
+    } else if (_currentCycle + 1 < _totalCycles) {
+      nextUp = "Cycle complete. Starting next loop.";
+    } else {
+      nextUp = "Workout Complete!";
+    }
+
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      0, // ID (use 0 to keep overwriting the previous one)
+      'Timer Finished',
+      nextUp,
+      tz.TZDateTime.now(tz.local).add(Duration(seconds: secondsFromNow)),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'cyclock_timer_channel',
+          'Timer Alerts',
+          channelDescription: 'Alerts when a timer finishes',
+          importance: Importance.max,
+          priority: Priority.high,
+          playSound: true,
+          // You can add a custom sound resource to android/app/src/main/res/raw
+          // sound: RawResourceAndroidNotificationSound('notification_sound'),
+        ),
+        iOS: DarwinNotificationDetails(
+          presentSound: true,
+          presentAlert: true,
+          presentBanner: true,
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+    );
   }
 
   Future<void> _playCurrentStageSound() async {
