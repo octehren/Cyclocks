@@ -242,6 +242,25 @@ class TimerEngine {
       print('Error playing sound: $e');
     }
   }
+
+  /// Allows user to select a new step in the running cyclock screen.
+  void jumpToStep(int index) {
+  if (index < 0 || index >= _stages.length) return;
+  
+  _currentStageIndex = index;
+  final nextStage = _stages[_currentStageIndex];
+  _remainingSeconds = nextStage.durationSeconds;
+  
+  // If using the DateTime fix for Android/Desktop:
+  // _stageEndTime = DateTime.now().add(Duration(seconds: _remainingSeconds));
+  
+  // If the timer was running, restart the ticker for the new stage
+  if (_isRunning) {
+    _currentTimer?.cancel();
+    _playCurrentStageSound(); // Optional: play sound of new stage
+    _startTicker();
+  }
+}
   
   void _handleCycleCompletion() {
     _currentCycle++;
