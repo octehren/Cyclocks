@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:file_picker/file_picker.dart';
+//import 'package:file_picker/file_picker.dart';
 import 'package:cyclocks/data/database.dart';
 import 'package:cyclocks/providers/settings_provider.dart';
 import 'package:cyclocks/presentation/screens/instructions_screen.dart';
@@ -103,22 +103,22 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 16),
           
           // Export Data
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.upload_file),
-              title: const Text('Export Cyclocks Data'),
-              onTap: _exportData,
-            ),
-          ),
+          // Card(
+          //   child: ListTile(
+          //     leading: const Icon(Icons.upload_file),
+          //     title: const Text('Export Cyclocks Data'),
+          //     onTap: _exportData,
+          //   ),
+          // ),
           
-          // Import Data
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.install_desktop),
-              title: const Text('Import Cyclocks Data'),
-              onTap: () => _importData(context),
-            ),
-          ),
+          // // Import Data
+          // Card(
+          //   child: ListTile(
+          //     leading: const Icon(Icons.install_desktop),
+          //     title: const Text('Import Cyclocks Data'),
+          //     onTap: () => _importData(context),
+          //   ),
+          // ),
         ],
       ),
     );
@@ -155,27 +155,27 @@ class SettingsScreen extends StatelessWidget {
     );
   }
   
-  Future<void> _exportData() async {
+  //Future<void> _exportData() async {
     // TODO: Implement data export functionality
     // ScaffoldMessenger.of( navigatorKey.currentContext!).showSnackBar(
     //   const SnackBar(content: Text('Export functionality - TODO')),
     // );
-  }
+  //}
   
-  Future<void> _importData(BuildContext context) async {
-    try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles();
+  // Future<void> _importData(BuildContext context) async {
+  //   try {
+  //     FilePickerResult? result = await FilePicker.platform.pickFiles();
       
-      if (result != null) {
-        // TODO: Implement data import functionality
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Import functionality - TODO')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error importing data: $e')),
-      );
-    }
-  }
+  //     if (result != null) {
+  //       // TODO: Implement data import functionality
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(content: Text('Import functionality - TODO')),
+  //       );
+  //     }
+  //   } catch (e) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text('Error importing data: $e')),
+  //     );
+  //   }
+  // }
 }
