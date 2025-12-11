@@ -12,12 +12,14 @@
 // ==============================================================================
 
 import 'dart:async';
+import 'package:cyclocks/helpers/audio_player_singleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // For limiting input to digits
 import 'package:cyclocks/data/database.dart';
 import 'package:drift/drift.dart' show Value; // Drift helper for SQL values
 import 'package:cyclocks/helpers/sound_helper.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:cyclocks/helpers/audio_player_singleton.dart';
 
 class CyclockEditScreen extends StatefulWidget {
   final AppDatabase database;
@@ -41,7 +43,7 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
   
   // Controllers
   final _nameController = TextEditingController();
-  final AudioPlayer _audioPlayer = AudioPlayer();
+  final AudioPlayerSingleton _audioPlayer = AudioPlayerSingleton();
   
   // Audio Playback State (for Fuse toggle and preview icons)
   PlayerState _playerState = PlayerState.stopped;
@@ -73,11 +75,11 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
     super.initState();
     
     // 1. Setup Audio Listeners to update UI icons when sound starts/stops
-    _playerStateSubscription = _audioPlayer.onPlayerStateChanged.listen((state) {
+    _playerStateSubscription = _audioPlayer.player.onPlayerStateChanged.listen((state) {
       if (mounted) setState(() => _playerState = state);
     });
 
-    _playerCompleteSubscription = _audioPlayer.onPlayerComplete.listen((_) {
+    _playerCompleteSubscription = _audioPlayer.player.onPlayerComplete.listen((_) {
       if (mounted) setState(() => _playerState = PlayerState.stopped);
     });
 
@@ -100,7 +102,7 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
     _nameController.dispose();
     _playerStateSubscription?.cancel();
     _playerCompleteSubscription?.cancel();
-    _audioPlayer.dispose();
+    //_audioPlayer.dispose();
     super.dispose();
   }
 
@@ -121,11 +123,11 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
       final sound = SoundHelper.getByFileName(_fuseSound);
       // Fuses typically loop, so check metadata
       if (sound?.type == SoundType.loop) {
-        await _audioPlayer.setReleaseMode(ReleaseMode.loop);
+        await _audioPlayer.player.setReleaseMode(ReleaseMode.loop);
       } else {
-        await _audioPlayer.setReleaseMode(ReleaseMode.stop);
+        await _audioPlayer.player.setReleaseMode(ReleaseMode.stop);
       }
-      await _audioPlayer.play(AssetSource('sounds/$_fuseSound'));
+      await _audioPlayer.player.play(AssetSource('sounds/$_fuseSound'));
     }
   }
 
@@ -134,8 +136,8 @@ class _CyclockEditScreenState extends State<CyclockEditScreen> {
     try {
       await _audioPlayer.stop();
       _playingSoundFile = fileName; 
-      await _audioPlayer.setReleaseMode(ReleaseMode.stop); // Triggers play once
-      await _audioPlayer.play(AssetSource('sounds/$fileName'));
+      await _audioPlayer.player.setReleaseMode(ReleaseMode.stop); // Triggers play once
+      await _audioPlayer.player.play(AssetSource('sounds/$fileName'));
     } catch (e) {
       debugPrint("Error playing sound preview: $e");
     }

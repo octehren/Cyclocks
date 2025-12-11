@@ -1,15 +1,16 @@
 import 'dart:async';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:cyclocks/data/database.dart';
 import 'package:cyclocks/helpers/sound_helper.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';  // Allows app not to sleep on mobile devices
-// NOTIFICATIONS ON MOBILE DEVICES
+import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
-import 'package:cyclocks/main.dart'; // To access the global notification plugin
+import 'package:cyclocks/main.dart';
+import 'package:cyclocks/helpers/audio_player_singleton.dart';
+import 'package:audioplayers/audioplayers.dart'; // defines ReleaseMode type
 
 class TimerEngine {
-  final AudioPlayer _audioPlayer = AudioPlayer();
+  // Use the singleton instance
+  final AudioPlayerSingleton _audioPlayer = AudioPlayerSingleton();
   Timer? _currentTimer;
   int _remainingSeconds = 0;
   List<TimerStage> _stages = [];
@@ -18,9 +19,10 @@ class TimerEngine {
   int _totalCycles = 1;
   bool _isRunning = false;
   bool _isPaused = false;
-  // Checks end of current stage to calculate delta-time so even if device (usually mobile) sleeps,
-  // app uses past Time.now to current Time.now instead of relying on computer clock
   DateTime? _stageEndTime;
+  
+  // Track which sound is currently playing (for loops)
+  String? _currentlyPlayingLoop;
   
   Function(int stageIndex, int remainingSeconds)? onTick;
   Function(int stageIndex)? onStageComplete;
@@ -38,28 +40,7 @@ class TimerEngine {
     _currentStageIndex = 0;
     _isRunning = false;
     _isPaused = false;
-
-    // ANDROID SETUP: Ensure audio plays even if screen dims/locks momentarily
-    final AudioContext audioContext = AudioContext(
-      // iOS: AudioContextIOS(
-      //   category: AVAudioSessionCategory.playback,
-      //   options: const {
-      //     AVAudioSessionOptions.mixWithOthers,
-      //     AVAudioSessionOptions.duckOthers,
-      //   },
-      // ),
-      android: AudioContextAndroid(
-        isSpeakerphoneOn: true,
-        stayAwake: true,
-        contentType: AndroidContentType.sonification,
-        usageType: AndroidUsageType.assistanceSonification,
-        audioFocus: AndroidAudioFocus.gain,
-      ),
-    );
-    AudioPlayer.global.setAudioContext(audioContext);
-    
-    // Reset player mode
-    _audioPlayer.setReleaseMode(ReleaseMode.stop);
+    _currentlyPlayingLoop = null;
     
     if (_stages.isNotEmpty) {
       _remainingSeconds = _stages.first.durationSeconds;
@@ -104,7 +85,7 @@ class TimerEngine {
   void stop() {
     _currentTimer?.cancel();
     _audioPlayer.stop();
-    _audioPlayer.setReleaseMode(ReleaseMode.stop);
+    _currentlyPlayingLoop = null;
     _isRunning = false;
     _isPaused = false;
     _currentStageIndex = 0;
@@ -125,8 +106,7 @@ class TimerEngine {
     // Calculate when this specific stage should end based on NOW + Remaining
     _stageEndTime = DateTime.now().add(Duration(seconds: _remainingSeconds));
 
-    // 2. SCHEDULE NOTIFICATION
-    // If the app dies/sleeps, this notification will wake the user up.
+    // SCHEDULE NOTIFICATION
     _scheduleStageEndNotification(_remainingSeconds);
 
     _currentTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -144,6 +124,7 @@ class TimerEngine {
       if (_remainingSeconds <= 0) {
         timer.cancel();
         _audioPlayer.stop(); // Stop any looping sounds from previous stage
+        _currentlyPlayingLoop = null;
         // Timer finished normally while app was open, 
         // cancel the backup notification so we don't get double sound.
         flutterLocalNotificationsPlugin.cancel(0); 
@@ -152,8 +133,6 @@ class TimerEngine {
         _currentStageIndex++;
         _handleStageTransition();
       } else {
-        // _remainingSeconds is now updated above
-        // _remainingSeconds--;
         onTick?.call(_currentStageIndex, _remainingSeconds);
       }
     });
@@ -176,11 +155,9 @@ class TimerEngine {
     }
   }
 
-  // Schedules a notification for when the timer hits 0
   Future<void> _scheduleStageEndNotification(int secondsFromNow) async {
     if (secondsFromNow <= 0) return;
 
-    // Determine the name of the NEXT stage (what starts when this ends)
     String nextUp = "Next stage starting";
     if (_currentStageIndex + 1 < _stages.length) {
       nextUp = "Up next: ${_stages[_currentStageIndex + 1].name}";
@@ -191,7 +168,7 @@ class TimerEngine {
     }
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
-      0, // ID (use 0 to keep overwriting the previous one)
+      0, // ID
       'Timer Finished',
       nextUp,
       tz.TZDateTime.now(tz.local).add(Duration(seconds: secondsFromNow)),
@@ -203,8 +180,6 @@ class TimerEngine {
           importance: Importance.max,
           priority: Priority.high,
           playSound: true,
-          // You can add a custom sound resource to android/app/src/main/res/raw
-          // sound: RawResourceAndroidNotificationSound('notification_sound'),
         ),
         iOS: DarwinNotificationDetails(
           presentSound: true,
@@ -231,36 +206,34 @@ class TimerEngine {
       
       if (soundDef.type == SoundType.loop) {
         // For Fuse/Loops: Set to loop and play
-        await _audioPlayer.setReleaseMode(ReleaseMode.loop);
-        await _audioPlayer.play(AssetSource('sounds/${soundDef.fileName}'));
+        await _audioPlayer.player.setReleaseMode(ReleaseMode.loop);
+        await _audioPlayer.playSound(soundDef.fileName, loop: true);
+        _currentlyPlayingLoop = soundDef.fileName;
       } else {
         // For Triggers: Set to stop (play once) and play
-        await _audioPlayer.setReleaseMode(ReleaseMode.stop);
-        await _audioPlayer.play(AssetSource('sounds/${soundDef.fileName}'));
+        await _audioPlayer.player.setReleaseMode(ReleaseMode.stop);
+        await _audioPlayer.playSound(soundDef.fileName, loop: false);
+        _currentlyPlayingLoop = null;
       }
     } catch (e) {
       print('Error playing sound: $e');
     }
   }
 
-  /// Allows user to select a new step in the running cyclock screen.
   void jumpToStep(int index) {
-  if (index < 0 || index >= _stages.length) return;
-  
-  _currentStageIndex = index;
-  final nextStage = _stages[_currentStageIndex];
-  _remainingSeconds = nextStage.durationSeconds;
-  
-  // If using the DateTime fix for Android/Desktop:
-  // _stageEndTime = DateTime.now().add(Duration(seconds: _remainingSeconds));
-  
-  // If the timer was running, restart the ticker for the new stage
-  if (_isRunning) {
-    _currentTimer?.cancel();
-    _playCurrentStageSound(); // Optional: play sound of new stage
-    _startTicker();
+    if (index < 0 || index >= _stages.length) return;
+    
+    _currentStageIndex = index;
+    final nextStage = _stages[_currentStageIndex];
+    _remainingSeconds = nextStage.durationSeconds;
+    
+    // If the timer was running, restart the ticker for the new stage
+    if (_isRunning) {
+      _currentTimer?.cancel();
+      _playCurrentStageSound();
+      _startTicker();
+    }
   }
-}
   
   void _handleCycleCompletion() {
     _currentCycle++;
@@ -269,6 +242,7 @@ class TimerEngine {
     if (_currentCycle >= _totalCycles) {
       _isRunning = false;
       _audioPlayer.stop();
+      _currentlyPlayingLoop = null;
       onAllCyclesComplete?.call();
     } else {
       _currentStageIndex = 0;
@@ -278,7 +252,10 @@ class TimerEngine {
   
   void dispose() {
     _currentTimer?.cancel();
-    _audioPlayer.dispose();
-    WakelockPlus.disable(); // Safety cleanup
+    // Don't dispose the singleton here - it's used elsewhere
+    // Just stop any playing sound
+    _audioPlayer.stop();
+    _currentlyPlayingLoop = null;
+    WakelockPlus.disable();
   }
 }

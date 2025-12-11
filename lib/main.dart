@@ -9,6 +9,7 @@ import 'package:cyclocks/providers/settings_provider.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:audioplayers/audioplayers.dart';
 
 // GLOBAL NOTIFICATION INSTANCE
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -20,7 +21,19 @@ void main() async {
   // 1. Initialize Timezone Database
   tz.initializeTimeZones();
 
-  // 2. Initialize Notifications
+  // 2. Initialize Audio Context for Android
+  final AudioContext audioContext = AudioContext(
+    android: AudioContextAndroid(
+      isSpeakerphoneOn: true,
+      stayAwake: true,
+      contentType: AndroidContentType.sonification,
+      usageType: AndroidUsageType.assistanceSonification,
+      audioFocus: AndroidAudioFocus.gain,
+    ),
+  );
+  AudioPlayer.global.setAudioContext(audioContext);
+
+  // 3. Initialize Notifications
   // Android Notifs
   const AndroidInitializationSettings initializationSettingsAndroid =
       AndroidInitializationSettings('@mipmap/ic_launcher');
